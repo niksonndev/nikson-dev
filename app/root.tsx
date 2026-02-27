@@ -6,8 +6,11 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import type { Route } from "./+types/root";
+import { GoogleTagManagerBody, GoogleTagManagerHead } from "~/components/GoogleTagManager";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -31,9 +34,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <GoogleTagManagerHead />
       </head>
       <body>
+        <GoogleTagManagerBody />
         {children}
+        <Analytics />
+        <SpeedInsights />
         <ScrollRestoration />
         <Scripts />
       </body>
