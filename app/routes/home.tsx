@@ -83,11 +83,17 @@ export default function Home() {
           <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
             <li>
               <ProjectCard
-                title="Shopify Checkout Tracking"
-                description="Optimized Shopify checkout tracking with server-side events and GTM data layer for accurate conversion and funnel metrics."
-                tags={["React", "GTM", "Liquid", "TypeScript"]}
-                liveUrl="#"
-                githubUrl="#"
+                title="Zenith Drones E-commerce"
+                description="High-conversion storefront for drone products with focused UX, performance optimizations and analytics-ready event structure."
+                tags={[
+                  "Next.js",
+                  "TypeScript",
+                  "Prisma",
+                  "Stripe",
+                  "Tailwind CSS",
+                ]}
+                liveUrl="https://zenith-drones.vercel.app/"
+                githubUrl="https://github.com/niksonndev/zenith-drones"
                 analyticsIntegrated
               />
             </li>
