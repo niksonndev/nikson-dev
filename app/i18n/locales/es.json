@@ -1,0 +1,37 @@
+{
+  "hero": {
+    "title": "Hola, soy Nikson Rotondaro",
+    "subtitle": "Ingeniero Front-end especializado en E-commerce de alto rendimiento y Web Analytics.",
+    "viewProjects": "Ver proyectos",
+    "linkedin": "LinkedIn"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "subtitle": "Trabajos seleccionados en e-commerce y analíticas web.",
+    "zenithDrones": {
+      "title": "Zenith Drones E-commerce",
+      "description": "Tienda de drones de alta conversión con UX premium, rendimiento optimizado y checkout con Stripe."
+    },
+    "maceioCine": {
+      "title": "Maceió Cine Bot",
+      "description": "Bot de Telegram que obtiene la programación de cines de Maceió con caché diario y health-check en producción."
+    },
+    "discordClone": {
+      "title": "Discord Clone",
+      "description": "Clon de Discord con salas, canales y comunicación en tiempo real con Socket.io y Zustand."
+    },
+    "shopifyBundle": {
+      "title": "Shopify Advanced Bundle",
+      "description": "Bundle builder avanzado para Shopify centrado en conversión, lógica de negocio y API Cart AJAX."
+    },
+    "liveDemo": "Demo en vivo",
+    "github": "GitHub",
+    "analyticsIntegrated": "Analytics integrado"
+  },
+  "footer": {
+    "available": "Disponible para proyectos"
+  },
+  "a11y": {
+    "skipToContent": "Saltar al contenido"
+  }
+}
