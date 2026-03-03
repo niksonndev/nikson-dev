@@ -84,13 +84,16 @@ export default function Home() {
             <li>
               <ProjectCard
                 title="Zenith Drones E-commerce"
-                description="High-conversion storefront for drone products with focused UX, performance optimizations and analytics-ready event structure."
+                description="E-commerce de drones com UX premium, performance otimizada e fluxo de checkout integrado ao Stripe."
                 tags={[
-                  "Next.js",
+                  "Next.js 15",
+                  "React 19",
                   "TypeScript",
+                  "Postgres",
                   "Prisma",
                   "Stripe",
-                  "Tailwind CSS",
+                  "Zustand",
+                  "Tailwind CSS 4",
                 ]}
                 liveUrl="https://zenith-drones.vercel.app/"
                 githubUrl="https://github.com/niksonndev/zenith-drones"
@@ -99,29 +102,46 @@ export default function Home() {
             </li>
             <li>
               <ProjectCard
-                title="E-commerce Dashboard"
-                description="Real-time dashboard for product performance and attribution, with custom dimensions and BigQuery export."
-                tags={["React", "TypeScript", "GTM", "GA4"]}
-                liveUrl="#"
-                githubUrl="#"
-                analyticsIntegrated
+                title="Maceió Cine Bot"
+                description="Bot de Telegram que faz scraping das redes de cinema de Maceió com cache diário e health-check em produção."
+                tags={[
+                  "Node.js",
+                  "Telegram Bot API",
+                  "Axios",
+                  "Express",
+                  "Docker",
+                ]}
+                liveUrl="https://t.me/MaceioCine_bot"
+                githubUrl="https://github.com/niksonndev/maceio-cinema-bot"
               />
             </li>
             <li>
               <ProjectCard
-                title="Landing Page Builder"
-                description="Modular landing pages with A/B test integration and event tracking for form submissions and CTA clicks."
-                tags={["React", "TypeScript", "Vite"]}
-                liveUrl="#"
-                githubUrl="#"
+                title="Discord Clone"
+                description="Clone de Discord com salas, canais e comunicação em tempo real usando Socket.io e Zustand para estado complexo."
+                tags={[
+                  "Next.js",
+                  "React",
+                  "TypeScript",
+                  "Socket.io",
+                  "Zustand",
+                  "Tailwind CSS",
+                ]}
+                githubUrl="https://github.com/niksonndev/discord-clone"
               />
             </li>
             <li>
               <ProjectCard
-                title="Data Layer Library"
-                description="Reusable data layer utilities for e-commerce events (view_item, add_to_cart, purchase) with TypeScript types."
-                tags={["TypeScript", "GTM", "GA4"]}
-                githubUrl="#"
+                title="Shopify Advanced Bundle"
+                description="Bundle builder avançado para Shopify focado em conversão, lógica de negócios customizada e integração com Cart AJAX API."
+                tags={[
+                  "Shopify",
+                  "Liquid",
+                  "Alpine.js",
+                  "Tailwind CSS",
+                  "Shopify AJAX API",
+                ]}
+                githubUrl="https://github.com/niksonndev/shopify-advanced-bundle"
                 analyticsIntegrated
               />
             </li>
