@@ -3,13 +3,29 @@ import type { Route } from "./+types/home";
 import { Footer } from "~/components/Footer";
 import { ProjectCard } from "~/components/ProjectCard";
 
-export function meta({}: Route.MetaArgs) {
-  return [{ title: "Nikson Rotondaro · Front-end Engineer & Web Analytics" }];
+const SITE_URL = import.meta.env.VITE_SITE_URL ?? "https://www.nikson.dev";
+const TITLE = "Nikson Rotondaro · Front-end Engineer & Web Analytics";
+const DESCRIPTION =
+  "Nikson Rotondaro — Front-end Engineer specializing in high-performance E-commerce and Web Analytics. Portfolio with projects in React, Next.js, Shopify, GTM and real-time applications.";
+
+export function meta(_: Route.MetaArgs) {
+  return [
+    { title: TITLE },
+    { name: "description", content: DESCRIPTION },
+    { property: "og:type", content: "website" },
+    { property: "og:title", content: TITLE },
+    { property: "og:description", content: DESCRIPTION },
+    { property: "og:url", content: SITE_URL },
+    { property: "og:locale", content: "pt_BR" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: TITLE },
+    { name: "twitter:description", content: DESCRIPTION },
+  ];
 }
 
 const container = {
   hidden: { opacity: 0 },
-  visible: (i = 1) => ({
+  visible: (_ = 1) => ({
     opacity: 1,
     transition: { staggerChildren: 0.12, delayChildren: 0.2 },
   }),
@@ -27,7 +43,7 @@ const item = {
 export default function Home() {
   return (
     <>
-      <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-sans px-4">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-sans px-4" id="main-content">
         <motion.div
           className="flex flex-col items-center justify-center text-center max-w-2xl"
           variants={container}
@@ -38,7 +54,7 @@ export default function Home() {
             variants={item}
             className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100"
           >
-            Hi, I'm Nikson Rotondaro
+            Hi, I&apos;m Nikson Rotondaro
           </motion.h1>
           <motion.p
             variants={item}

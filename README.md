@@ -1,87 +1,82 @@
-# Welcome to React Router!
+# Nikson Rotondaro — Portfolio
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Portfólio de Nikson Rotondaro: Front-end Engineer com foco em E-commerce de alta performance e Web Analytics.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+**Site:** [nikson.dev](https://www.nikson.dev) *(atualize com sua URL em produção)*
 
-## Features
+## Stack
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- [React Router v7](https://reactrouter.com/) (SSR)
+- [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS v4](https://tailwindcss.com/)
+- [Framer Motion](https://www.framer.com/motion/)
+- [Vercel](https://vercel.com) (deploy) + Analytics & Speed Insights
+- Google Tag Manager (opcional, via `VITE_GTM_ID`)
 
-## Getting Started
+## Como rodar
 
-### Installation
-
-Install the dependencies:
+### Instalação
 
 ```bash
 pnpm install
 ```
 
-### Development
-
-Start the development server with HMR:
+### Desenvolvimento
 
 ```bash
 pnpm dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+Aplicação em `http://localhost:5173`.
 
-## Building for Production
-
-Create a production build:
+### Build de produção
 
 ```bash
 pnpm build
 ```
 
-## Deployment
+### Scripts
 
-### Docker Deployment
+| Comando           | Descrição                    |
+|-------------------|-----------------------------|
+| `pnpm dev`        | Servidor de desenvolvimento |
+| `pnpm build`      | Build de produção           |
+| `pnpm start`      | Servidor de produção        |
+| `pnpm typecheck`  | Gera tipos e roda TypeScript|
+| `pnpm lint`       | ESLint                      |
+| `pnpm format`     | Prettier                    |
 
-To build and run using Docker:
+## Deploy (Vercel)
 
-```bash
-docker build -t my-app .
+O projeto está configurado para a Vercel com o preset `@vercel/react-router`. Ao conectar o repositório:
 
-# Run the container
-docker run -p 3000:3000 my-app
+- **Build Command:** `pnpm build`
+- **Install Command:** `pnpm install`
+- **Output:** detectado automaticamente pelo preset.
+
+### Variáveis de ambiente
+
+| Variável        | Obrigatória | Descrição                                    |
+|-----------------|-------------|----------------------------------------------|
+| `VITE_GTM_ID`   | Não         | ID do container GTM (ex.: GTM-XXX)          |
+| `VITE_SITE_URL` | Não         | URL canônica do site (ex.: https://www.nikson.dev) |
+
+Copie `.env.example` para `.env` e preencha conforme necessário.
+
+## Estrutura
+
+```
+├── app/
+│   ├── components/   # Footer, ProjectCard, GoogleTagManager
+│   ├── routes/       # Rotas (home)
+│   ├── app.css       # Estilos globais + Tailwind
+│   └── root.tsx      # Layout, meta, links
+├── public/           # Assets estáticos (favicon, robots.txt)
+├── react-router.config.ts
+├── vite.config.ts
+└── package.json
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+## Licença
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `pnpm build`
-
-```
-├── package.json
-├── pnpm-lock.yaml
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+MIT

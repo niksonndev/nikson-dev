@@ -37,7 +37,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,6 +47,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <GoogleTagManagerHead />
       </head>
       <body>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-zinc-100 focus:px-3 focus:py-2 focus:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+        >
+          Pular para o conteúdo
+        </a>
         <GoogleTagManagerBody />
         {children}
         <Analytics />
@@ -68,10 +74,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = error.status === 404 ? "404" : "Erro";
     details =
       error.status === 404
-        ? "The requested page could not be found."
+        ? "A página solicitada não foi encontrada."
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
@@ -79,14 +85,19 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
+    <main
+      role="alert"
+      className="min-h-screen bg-zinc-950 px-4 py-16 font-sans text-zinc-100"
+    >
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-2xl font-bold">{message}</h1>
+        <p className="mt-2 text-zinc-400">{details}</p>
+        {stack && (
+          <pre className="mt-6 w-full overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm text-zinc-400">
+            <code>{stack}</code>
+          </pre>
+        )}
+      </div>
     </main>
   );
 }

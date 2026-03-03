@@ -1,0 +1,9 @@
+# Dependencies
+node_modules/
+
+# Build
+build/
+.react-router/
+
+# Lockfiles (optional, keep if you want to ignore)
+# pnpm-lock.yaml
