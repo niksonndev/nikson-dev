@@ -2,7 +2,7 @@
 
 Portfólio de Nikson Rotondaro: Front-end Engineer com foco em E-commerce de alta performance e Web Analytics.
 
-**Site:** [nikson.dev](https://www.nikson.dev) *(atualize com sua URL em produção)*
+**Site:** [nikson.dev](https://www.nikson.dev)
 
 ## Stack
 
@@ -11,7 +11,7 @@ Portfólio de Nikson Rotondaro: Front-end Engineer com foco em E-commerce de alt
 - [Tailwind CSS v4](https://tailwindcss.com/)
 - [Framer Motion](https://www.framer.com/motion/)
 - [Vercel](https://vercel.com) (deploy) + Analytics & Speed Insights
-- Google Tag Manager (opcional, via `VITE_GTM_ID`)
+- Google Tag Manager
 
 ## Como rodar
 
@@ -53,15 +53,6 @@ O projeto está configurado para a Vercel com o preset `@vercel/react-router`. A
 - **Build Command:** `pnpm build`
 - **Install Command:** `pnpm install`
 - **Output:** detectado automaticamente pelo preset.
-
-### Variáveis de ambiente
-
-| Variável        | Obrigatória | Descrição                                    |
-|-----------------|-------------|----------------------------------------------|
-| `VITE_GTM_ID`   | Não         | ID do container GTM (ex.: GTM-XXX)          |
-| `VITE_SITE_URL` | Não         | URL canônica do site (ex.: https://www.nikson.dev) |
-
-Copie `.env.example` para `.env` e preencha conforme necessário.
 
 ## Estrutura
 
