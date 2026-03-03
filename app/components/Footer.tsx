@@ -1,4 +1,8 @@
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+
 export function Footer() {
+  const { t } = useTranslation();
   return (
     <footer
       className="border-t border-zinc-800 bg-zinc-950 font-sans"
@@ -11,15 +15,18 @@ export function Footer() {
         >
           niksonndev@gmail.com
         </a>
-        <div className="flex items-center gap-2">
-          <span
-            className="relative flex size-2"
-            aria-hidden
-          >
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-          </span>
-          <span>Available for projects</span>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            <span
+              className="relative flex size-2"
+              aria-hidden
+            >
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+            </span>
+            <span>{t("footer.available")}</span>
+          </div>
         </div>
       </div>
     </footer>

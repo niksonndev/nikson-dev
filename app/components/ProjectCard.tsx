@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BarChart3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export type ProjectCardProps = {
   title: string;
@@ -18,6 +19,7 @@ export function ProjectCard({
   githubUrl,
   analyticsIntegrated = false,
 }: ProjectCardProps) {
+  const { t } = useTranslation();
   return (
     <motion.article
       initial={{ opacity: 0, y: 24 }}
@@ -29,7 +31,7 @@ export function ProjectCard({
       {analyticsIntegrated && (
         <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-400 ring-1 ring-emerald-500/30">
           <BarChart3 className="size-3.5" aria-hidden />
-          Analytics Integrated
+          {t("projects.analyticsIntegrated")}
         </span>
       )}
       <h3
@@ -60,7 +62,7 @@ export function ProjectCard({
             rel="noreferrer"
             className="text-sm font-medium text-zinc-300 underline decoration-zinc-600 underline-offset-2 transition hover:text-zinc-100 hover:decoration-zinc-400"
           >
-            Live Demo
+            {t("projects.liveDemo")}
           </a>
         )}
         {githubUrl && (
@@ -70,7 +72,7 @@ export function ProjectCard({
             rel="noreferrer"
             className="text-sm font-medium text-zinc-300 underline decoration-zinc-600 underline-offset-2 transition hover:text-zinc-100 hover:decoration-zinc-400"
           >
-            GitHub
+            {t("projects.github")}
           </a>
         )}
       </div>

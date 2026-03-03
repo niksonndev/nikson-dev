@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import type { Route } from "./+types/home";
 import { Footer } from "~/components/Footer";
 import { ProjectCard } from "~/components/ProjectCard";
+import { useTranslation } from "react-i18next";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? "https://www.nikson.dev";
 const TITLE = "Nikson Rotondaro · Front-end Engineer & Web Analytics";
@@ -41,6 +42,7 @@ const item = {
 };
 
 export default function Home() {
+  const { t } = useTranslation();
   return (
     <>
       <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-sans px-4" id="main-content">
@@ -54,14 +56,13 @@ export default function Home() {
             variants={item}
             className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100"
           >
-            Hi, I&apos;m Nikson Rotondaro
+            {t("hero.title")}
           </motion.h1>
           <motion.p
             variants={item}
             className="mt-4 text-lg text-zinc-400 md:text-xl leading-relaxed"
           >
-            Front-end Engineer specializing in high-performance E-commerce &
-            Web Analytics.
+            {t("hero.subtitle")}
           </motion.p>
           <motion.div
             variants={item}
@@ -71,7 +72,7 @@ export default function Home() {
               href="#projects"
               className="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-zinc-950"
             >
-              View Projects
+              {t("hero.viewProjects")}
             </a>
             <a
               href="https://www.linkedin.com/in/nikson-rotondaro"
@@ -79,7 +80,7 @@ export default function Home() {
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-lg border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
             >
-              LinkedIn
+              {t("hero.linkedin")}
             </a>
           </motion.div>
         </motion.div>
@@ -87,20 +88,20 @@ export default function Home() {
       <section
         id="projects"
         className="bg-zinc-950 font-sans px-4 py-16 md:py-24"
-        aria-label="Projects"
+        aria-label={t("projects.title")}
       >
         <div className="mx-auto max-w-5xl">
           <h2 className="text-2xl font-bold text-zinc-100 md:text-3xl">
-            Projects
+            {t("projects.title")}
           </h2>
           <p className="mt-2 text-zinc-400">
-            Selected work in e-commerce and web analytics.
+            {t("projects.subtitle")}
           </p>
           <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
             <li>
               <ProjectCard
-                title="Zenith Drones E-commerce"
-                description="E-commerce de drones com UX premium, performance otimizada e fluxo de checkout integrado ao Stripe."
+                title={t("projects.zenithDrones.title")}
+                description={t("projects.zenithDrones.description")}
                 tags={[
                   "Next.js 15",
                   "React 19",
@@ -118,8 +119,8 @@ export default function Home() {
             </li>
             <li>
               <ProjectCard
-                title="Maceió Cine Bot"
-                description="Bot de Telegram que faz scraping das redes de cinema de Maceió com cache diário e health-check em produção."
+                title={t("projects.maceioCine.title")}
+                description={t("projects.maceioCine.description")}
                 tags={[
                   "Node.js",
                   "Telegram Bot API",
@@ -133,8 +134,8 @@ export default function Home() {
             </li>
             <li>
               <ProjectCard
-                title="Discord Clone"
-                description="Clone de Discord com salas, canais e comunicação em tempo real usando Socket.io e Zustand para estado complexo."
+                title={t("projects.discordClone.title")}
+                description={t("projects.discordClone.description")}
                 tags={[
                   "Next.js",
                   "React",
@@ -148,8 +149,8 @@ export default function Home() {
             </li>
             <li>
               <ProjectCard
-                title="Shopify Advanced Bundle"
-                description="Bundle builder avançado para Shopify focado em conversão, lógica de negócios customizada e integração com Cart AJAX API."
+                title={t("projects.shopifyBundle.title")}
+                description={t("projects.shopifyBundle.description")}
                 tags={[
                   "Shopify",
                   "Liquid",

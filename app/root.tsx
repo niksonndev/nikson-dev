@@ -11,13 +11,16 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import type { Route } from "./+types/root";
 import { GoogleTagManagerBody, GoogleTagManagerHead } from "~/components/GoogleTagManager";
+import { SetDocumentLang } from "~/components/SetDocumentLang";
+import { SkipLink } from "~/components/SkipLink";
+import "~/i18n/i18n";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
   {
     rel: "icon",
-    type: "image/svg+xml",
-    href: "/icon.svg",
+    type: "image/x-icon",
+    href: "/favicon.ico",
   },
   {
     rel: "apple-touch-icon",
@@ -47,12 +50,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <GoogleTagManagerHead />
       </head>
       <body>
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-zinc-100 focus:px-3 focus:py-2 focus:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-400"
-        >
-          Pular para o conteúdo
-        </a>
+        <SkipLink />
+        <SetDocumentLang />
         <GoogleTagManagerBody />
         {children}
         <Analytics />
