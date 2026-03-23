@@ -1,24 +1,25 @@
 {
   "hero": {
     "title": "Oi, sou Nikson Rotondaro",
-    "subtitle": "Front-end Engineer especializado em E-commerce de alta performance e Web Analytics.",
+    "subtitle": "Full Stack Software Engineer",
     "viewProjects": "Ver projetos",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "github": "GitHub"
   },
   "projects": {
     "title": "Projetos",
     "subtitle": "Trabalhos selecionados em e-commerce e analytics web.",
-    "zenithDrones": {
-      "title": "Zenith Drones E-commerce",
-      "description": "Loja de drones de alta conversão com UX premium, performance otimizada e checkout integrado ao Stripe."
+    "imovelRadar": {
+      "title": "Imóvel Radar",
+      "description": "Monitore imóveis na OLX Maceió em tempo real e receba notificações direto no seu Telegram."
     },
     "maceioCine": {
       "title": "Maceió Cine Bot",
       "description": "Bot de Telegram que consulta a programação dos cinemas de Maceió com cache diário e health-check em produção."
     },
-    "discordClone": {
-      "title": "Discord Clone",
-      "description": "Clone de Discord com salas, canais e comunicação em tempo real usando Socket.io e Zustand."
+    "jobHunterAi": {
+      "title": "Job Hunter AI",
+      "description": "Agente de IA caçando vagas que fazem sentido!"
     },
     "shopifyBundle": {
       "title": "Shopify Advanced Bundle",

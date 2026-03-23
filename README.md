@@ -1,6 +1,6 @@
 # Nikson Rotondaro — Portfolio
 
-Portfólio de Nikson Rotondaro: Front-end Engineer com foco em E-commerce de alta performance e Web Analytics.
+Portfólio de Nikson Rotondaro — Full Stack Software Engineer.
 
 **Site:** [nikson.dev](https://www.nikson.dev)
 

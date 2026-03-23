@@ -5,9 +5,9 @@ import { ProjectCard } from "~/components/ProjectCard";
 import { useTranslation } from "react-i18next";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? "https://www.nikson.dev";
-const TITLE = "Nikson Rotondaro · Front-end Engineer & Web Analytics";
+const TITLE = "Nikson Rotondaro · Full Stack Software Engineer";
 const DESCRIPTION =
-  "Nikson Rotondaro — Front-end Engineer specializing in high-performance E-commerce and Web Analytics. Portfolio with projects in React, Next.js, Shopify, GTM and real-time applications.";
+  "Nikson Rotondaro — Full Stack Software Engineer. Portfolio with projects in React, Next.js, Shopify, GTM and real-time applications.";
 
 export function meta(_: Route.MetaArgs) {
   return [
@@ -82,6 +82,14 @@ export default function Home() {
             >
               {t("hero.linkedin")}
             </a>
+            <a
+              href="https://github.com/niksonndev"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center rounded-lg border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+            >
+              {t("hero.github")}
+            </a>
           </motion.div>
         </motion.div>
       </main>
@@ -100,21 +108,16 @@ export default function Home() {
           <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
             <li>
               <ProjectCard
-                title={t("projects.zenithDrones.title")}
-                description={t("projects.zenithDrones.description")}
+                title={t("projects.imovelRadar.title")}
+                description={t("projects.imovelRadar.description")}
                 tags={[
-                  "Next.js 15",
-                  "React 19",
-                  "TypeScript",
-                  "Postgres",
-                  "Prisma",
-                  "Stripe",
-                  "Zustand",
-                  "Tailwind CSS 4",
+                  "Python",
+                  "SQLite",
+                  "Oracle Cloud",
+                  "CloudScraper",
                 ]}
-                liveUrl="https://zenith-drones.vercel.app/"
-                githubUrl="https://github.com/niksonndev/zenith-drones"
-                analyticsIntegrated
+                liveUrl="https://t.me/imovel_radar_bot"
+                githubUrl="https://github.com/niksonndev/imovel-radar"
               />
             </li>
             <li>
@@ -134,17 +137,15 @@ export default function Home() {
             </li>
             <li>
               <ProjectCard
-                title={t("projects.discordClone.title")}
-                description={t("projects.discordClone.description")}
+                title={t("projects.jobHunterAi.title")}
+                description={t("projects.jobHunterAi.description")}
                 tags={[
-                  "Next.js",
-                  "React",
                   "TypeScript",
-                  "Socket.io",
-                  "Zustand",
-                  "Tailwind CSS",
+                  "SQLite3",
+                  "Playwright",
+                  "Agentic AI",
                 ]}
-                githubUrl="https://github.com/niksonndev/discord-clone"
+                githubUrl="https://github.com/niksonndev/job-hunter-ai"
               />
             </li>
             <li>
