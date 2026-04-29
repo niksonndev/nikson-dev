@@ -45,7 +45,10 @@ export default function Home() {
   const { t } = useTranslation();
   return (
     <>
-      <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-sans px-4" id="main-content">
+      <main
+        className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-sans px-4"
+        id="main-content"
+      >
         <motion.div
           className="flex flex-col items-center justify-center text-center max-w-2xl"
           variants={container}
@@ -130,20 +133,13 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-zinc-100 md:text-3xl">
             {t("projects.title")}
           </h2>
-          <p className="mt-2 text-zinc-400">
-            {t("projects.subtitle")}
-          </p>
+          <p className="mt-2 text-zinc-400">{t("projects.subtitle")}</p>
           <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
             <li>
               <ProjectCard
                 title={t("projects.imovelRadar.title")}
                 description={t("projects.imovelRadar.description")}
-                tags={[
-                  "Python",
-                  "SQLite",
-                  "Oracle Cloud",
-                  "CloudScraper",
-                ]}
+                tags={["Python", "SQLite", "Oracle Cloud", "CloudScraper"]}
                 liveUrl="https://t.me/imovel_radar_bot"
                 githubUrl="https://github.com/niksonndev/imovel-radar"
               />
@@ -152,13 +148,7 @@ export default function Home() {
               <ProjectCard
                 title={t("projects.maceioCine.title")}
                 description={t("projects.maceioCine.description")}
-                tags={[
-                  "Node.js",
-                  "Telegram Bot API",
-                  "Axios",
-                  "Express",
-                  "Docker",
-                ]}
+                tags={["Node.js", "Telegram Bot API", "Axios", "Express", "Docker"]}
                 liveUrl="https://t.me/MaceioCine_bot"
                 githubUrl="https://github.com/niksonndev/maceio-cinema-bot"
               />
@@ -167,12 +157,7 @@ export default function Home() {
               <ProjectCard
                 title={t("projects.jobHunterAi.title")}
                 description={t("projects.jobHunterAi.description")}
-                tags={[
-                  "TypeScript",
-                  "SQLite3",
-                  "Playwright",
-                  "Agentic AI",
-                ]}
+                tags={["TypeScript", "SQLite3", "Playwright", "Agentic AI"]}
                 githubUrl="https://github.com/niksonndev/job-hunter-ai"
               />
             </li>
