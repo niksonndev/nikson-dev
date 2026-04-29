@@ -29,6 +29,12 @@
     "github": "GitHub",
     "analyticsIntegrated": "Analytics Integrated"
   },
+  "about": {
+    "title": "About me",
+    "paragraph1": "I build real products that solve real problems—real estate bots on Telegram, cinema listings scrapers, AI agents for job hunting. I've shipped code to production for international SaaS platforms, working in distributed teams across Brazil, Portugal, and the US.",
+    "paragraph2": "I'm equally comfortable architecting backend systems, building React frontends, or scripting automation. What matters to me is solving the problem efficiently—whether that's optimizing database queries or simplifying complex logic so it just works.",
+    "paragraph3": "Based in Maceió, Brazil. Open to remote freelance projects and full-time roles. If you need someone who ships, let's talk."
+  },
   "footer": {
     "available": "Available for projects"
   },
