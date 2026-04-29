@@ -94,6 +94,34 @@ export default function Home() {
         </motion.div>
       </main>
       <section
+        id="about"
+        className="bg-zinc-950 font-sans px-4 py-16 md:py-24"
+        aria-label={t("about.title")}
+      >
+        <div className="mx-auto max-w-3xl">
+          <motion.h2
+            className="text-2xl font-bold text-zinc-100 md:text-3xl"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {t("about.title")}
+          </motion.h2>
+          <motion.div
+            className="mt-8 space-y-4 text-zinc-300 md:text-lg leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            <p>{t("about.paragraph1")}</p>
+            <p>{t("about.paragraph2")}</p>
+            <p>{t("about.paragraph3")}</p>
+          </motion.div>
+        </div>
+      </section>
+      <section
         id="projects"
         className="bg-zinc-950 font-sans px-4 py-16 md:py-24"
         aria-label={t("projects.title")}
