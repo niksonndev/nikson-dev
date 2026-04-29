@@ -29,6 +29,12 @@
     "github": "GitHub",
     "analyticsIntegrated": "Analytics integrado"
   },
+  "about": {
+    "title": "Sobre mim",
+    "paragraph1": "Construo produtos reais que resolvem problemas reais—bots de imóveis no Telegram, scrapers de cinema, agentes de IA para automação de vagas. Coloquei código em produção para plataformas SaaS internacionais, trabalhando em times distribuídos entre Brasil, Portugal e EUA.",
+    "paragraph2": "Sou igualmente à vontade arquitetando sistemas backend, construindo frontends em React ou scripting automação. O que importa é resolver o problema de forma eficiente—seja otimizando queries no banco de dados ou simplificando lógica complexa para tudo funcionar.",
+    "paragraph3": "Baseado em Maceió, Brasil. Aberto para projetos remotos de freelance e posições full-time. Se você precisa de alguém que entrega, me chama."
+  },
   "footer": {
     "available": "Disponível para projetos"
   },
