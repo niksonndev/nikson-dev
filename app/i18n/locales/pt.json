@@ -3,6 +3,7 @@
     "title": "Oi, sou Nikson Rotondaro",
     "subtitle": "Full Stack Software Engineer",
     "viewProjects": "Ver projetos",
+    "hireMe": "Me contrate",
     "linkedin": "LinkedIn",
     "github": "GitHub"
   },
@@ -11,19 +12,19 @@
     "subtitle": "Trabalhos selecionados em e-commerce e analytics web.",
     "imovelRadar": {
       "title": "Imóvel Radar",
-      "description": "Monitore imóveis na OLX Maceió em tempo real e receba notificações direto no seu Telegram."
+      "description": "Rastreia 4.900+ imóveis ativos, rodando diariamente às 8AM para detectar e entregar novos imóveis em tempo real via Telegram."
     },
     "maceioCine": {
       "title": "Maceió Cine Bot",
-      "description": "Bot de Telegram que consulta a programação dos cinemas de Maceió com cache diário e health-check em produção."
+      "description": "Eliminou o Playwright por completo ao reverter engenharia de APIs internas — reduzindo payload em 86% (109KB → 14,6KB) e permitindo deploy gratuito no Render."
     },
     "jobHunterAi": {
       "title": "Job Hunter AI",
-      "description": "Agente de IA caçando vagas que fazem sentido!"
+      "description": "Avalia 1.000 vagas de emprego por ~$0,13, combinando autonomamente oportunidades com meu currículo e registrando resultados no Google Sheets."
     },
     "shopifyBundle": {
       "title": "Shopify Advanced Bundle",
-      "description": "Bundle builder avançado para Shopify focado em conversão, lógica de negócios customizada e integração com Cart AJAX API."
+      "description": "Prova de conceito de bundling avançado para Shopify com frontend leve — construído para explorar lógica comercial customizada com foco em conversão."
     },
     "liveDemo": "Demo ao vivo",
     "github": "GitHub",

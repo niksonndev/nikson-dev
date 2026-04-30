@@ -78,6 +78,12 @@ export default function Home() {
               {t("hero.viewProjects")}
             </a>
             <a
+              href="mailto:niksonndev@gmail.com"
+              className="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-zinc-950"
+            >
+              {t("hero.hireMe")}
+            </a>
+            <a
               href="https://www.linkedin.com/in/nikson-rotondaro"
               target="_blank"
               rel="noreferrer"
