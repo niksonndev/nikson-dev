@@ -131,6 +131,101 @@ export default function Home() {
         </div>
       </section>
       <section
+        id="experience"
+        className="bg-zinc-950 font-sans px-4 py-16 md:py-24"
+        aria-label={t("experience.title")}
+      >
+        <div className="mx-auto max-w-5xl">
+          <motion.h2
+            className="text-2xl font-bold text-zinc-100 md:text-3xl"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {t("experience.title")}
+          </motion.h2>
+          <motion.p
+            className="mt-2 text-zinc-400"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {t("experience.subtitle")}
+          </motion.p>
+
+          <div className="mt-10">
+            {/* Pixelmatters */}
+            <div className="grid grid-cols-[20px_1fr] gap-x-6">
+              <div className="flex flex-col items-center">
+                <span className="h-3.5 w-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950 shrink-0 mt-1" />
+                <div className="flex-1 w-px bg-zinc-700 my-1" />
+              </div>
+              <article className="pb-12">
+                <p className="text-sm uppercase tracking-[0.24em] text-zinc-500">
+                  {t("experience.pixelmatters.dates")}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-zinc-100">
+                  {t("experience.pixelmatters.company")}
+                </h3>
+                <p className="mt-1 text-zinc-400">
+                  {t("experience.pixelmatters.position")}
+                </p>
+                <ul className="mt-4 space-y-2 text-zinc-400 list-disc list-inside">
+                  <li>{t("experience.pixelmatters.bullet1")}</li>
+                  <li>{t("experience.pixelmatters.bullet2")}</li>
+                  <li>{t("experience.pixelmatters.bullet3")}</li>
+                  <li>{t("experience.pixelmatters.bullet4")}</li>
+                </ul>
+              </article>
+            </div>
+
+            {/* Cognizant */}
+            <div className="grid grid-cols-[20px_1fr] gap-x-6">
+              <div className="flex flex-col items-center">
+                <span className="h-3.5 w-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950 shrink-0 mt-1" />
+                <div className="flex-1 w-px bg-zinc-700 my-1" />
+              </div>
+              <article className="pb-12">
+                <p className="text-sm uppercase tracking-[0.24em] text-zinc-500">
+                  {t("experience.cognizant.dates")}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-zinc-100">
+                  {t("experience.cognizant.company")}
+                </h3>
+                <p className="mt-1 text-zinc-400">{t("experience.cognizant.position")}</p>
+                <ul className="mt-4 space-y-2 text-zinc-400 list-disc list-inside">
+                  <li>{t("experience.cognizant.bullet1")}</li>
+                  <li>{t("experience.cognizant.bullet2")}</li>
+                  <li>{t("experience.cognizant.bullet3")}</li>
+                </ul>
+              </article>
+            </div>
+
+            {/* SoftWrap */}
+            <div className="grid grid-cols-[20px_1fr] gap-x-6">
+              <div className="flex flex-col items-center">
+                <span className="h-3.5 w-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950 shrink-0 mt-1" />
+              </div>
+              <article>
+                <p className="text-sm uppercase tracking-[0.24em] text-zinc-500">
+                  {t("experience.softWrap.dates")}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-zinc-100">
+                  {t("experience.softWrap.company")}
+                </h3>
+                <p className="mt-1 text-zinc-400">{t("experience.softWrap.position")}</p>
+                <ul className="mt-4 space-y-2 text-zinc-400 list-disc list-inside">
+                  <li>{t("experience.softWrap.bullet1")}</li>
+                  <li>{t("experience.softWrap.bullet2")}</li>
+                </ul>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section
         id="projects"
         className="bg-zinc-950 font-sans px-4 py-16 md:py-24"
         aria-label={t("projects.title")}

@@ -30,6 +30,34 @@
     "github": "GitHub",
     "analyticsIntegrated": "Analytics integrado"
   },
+  "experience": {
+    "title": "Experiência",
+    "subtitle": "Papeis e colaborações em produto, analytics e front-end.",
+    "pixelmatters": {
+      "company": "Pixelmatters",
+      "position": "Front-end Engineer · Remoto (Portugal)",
+      "dates": "Ago 2022 – Mar 2023",
+      "bullet1": "Contribuí para decisões de stack do BrightAction com Vite e SSR.",
+      "bullet2": "Atuei como referência técnica em Tailwind CSS e TanStack Query.",
+      "bullet3": "Criei biblioteca de componentes reutilizáveis com Storybook.",
+      "bullet4": "Colaborei diariamente com clientes dos EUA em inglês."
+    },
+    "cognizant": {
+      "company": "Cognizant",
+      "position": "Web Analytics Analyst (JS/GTM) · São Paulo, Brasil",
+      "dates": "Ago 2021 – Mar 2022",
+      "bullet1": "Implementei tracking customizado para 900+ e-commerces internacionais em seis meses.",
+      "bullet2": "Implementei GTM e GA4 em Shopify, WordPress e Magento.",
+      "bullet3": "Fiz parte de um projeto global do Google para padronizar a implementação de analytics."
+    },
+    "softWrap": {
+      "company": "SoftWrap",
+      "position": "Front-end Developer · Brasil",
+      "dates": "Jun 2021 – Nov 2021",
+      "bullet1": "Desenvolvi apps web com React.js e apps mobile com React Native.",
+      "bullet2": "Integrei serviços REST e GraphQL para aplicações clientes."
+    }
+  },
   "about": {
     "title": "Sobre mim",
     "paragraph1": "Construo produtos reais que resolvem problemas reais—bots de imóveis no Telegram, scrapers de cinema, agentes de IA para automação de vagas. Coloquei código em produção para plataformas SaaS internacionais, trabalhando em times distribuídos entre Brasil, Portugal e EUA.",

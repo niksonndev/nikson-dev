@@ -30,6 +30,34 @@
     "github": "GitHub",
     "analyticsIntegrated": "Analytics Integrated"
   },
+  "experience": {
+    "title": "Work experience",
+    "subtitle": "Roles and collaboration across product, analytics, and front-end engineering.",
+    "pixelmatters": {
+      "company": "Pixelmatters",
+      "position": "Front-end Engineer · Remote (Portugal)",
+      "dates": "Aug 2022 – Mar 2023",
+      "bullet1": "Contributed to stack decisions for BrightAction using Vite and SSR.",
+      "bullet2": "Served as technical reference for Tailwind CSS and TanStack Query.",
+      "bullet3": "Built a reusable component library with Storybook.",
+      "bullet4": "Collaborated daily with US-based clients in English."
+    },
+    "cognizant": {
+      "company": "Cognizant",
+      "position": "Web Analytics Analyst (JS/GTM) · São Paulo, Brazil",
+      "dates": "Aug 2021 – Mar 2022",
+      "bullet1": "Delivered custom tracking for 900+ international e-commerces in six months.",
+      "bullet2": "Implemented GTM and GA4 across Shopify, WordPress, and Magento.",
+      "bullet3": "Worked as part of a global Google project to standardize analytics implementation."
+    },
+    "softWrap": {
+      "company": "SoftWrap",
+      "position": "Front-end Developer · Brazil",
+      "dates": "Jun 2021 – Nov 2021",
+      "bullet1": "Built web apps with React.js and mobile apps with React Native.",
+      "bullet2": "Integrated REST and GraphQL services for client-facing applications."
+    }
+  },
   "about": {
     "title": "About me",
     "paragraph1": "I build real products that solve real problems—real estate bots on Telegram, cinema listings scrapers, AI agents for job hunting. I've shipped code to production for international SaaS platforms, working in distributed teams across Brazil, Portugal, and the US.",
