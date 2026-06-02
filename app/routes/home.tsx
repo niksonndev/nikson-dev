@@ -69,7 +69,34 @@ export default function Home() {
               variants={item}
               className="mt-10 flex flex-wrap items-center justify-center gap-4"
             >
-              {/* botões */}
+              <a
+                href="#projects"
+                className="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-zinc-950"
+              >
+                {t("hero.viewProjects")}
+              </a>
+              <a
+                href="mailto:niksonndev@gmail.com"
+                className="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-zinc-950"
+              >
+                {t("hero.hireMe")}
+              </a>
+              <a
+                href="https://www.linkedin.com/in/nikson-rotondaro"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-lg border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+              >
+                {t("hero.linkedin")}
+              </a>
+              <a
+                href="https://github.com/niksonndev"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-lg border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+              >
+                {t("hero.github")}
+              </a>
             </motion.div>
           </motion.div>
         </div>
