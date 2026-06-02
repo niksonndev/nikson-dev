@@ -49,15 +49,15 @@ export default function Home() {
         className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-sans px-4"
         id="main-content"
       >
+        <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100">
+          {t("hero.title")}
+        </h1>
         <motion.div
           className="flex flex-col items-center justify-center text-center max-w-2xl"
           variants={container}
           initial="hidden"
           animate="visible"
         >
-          <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100">
-            {t("hero.title")}
-          </h1>
           <motion.p
             variants={item}
             className="mt-4 text-lg text-zinc-400 md:text-xl leading-relaxed"
