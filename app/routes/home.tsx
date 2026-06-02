@@ -55,12 +55,9 @@ export default function Home() {
           initial="hidden"
           animate="visible"
         >
-          <motion.h1
-            variants={item}
-            className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100"
-          >
+          <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100">
             {t("hero.title")}
-          </motion.h1>
+          </h1>
           <motion.p
             variants={item}
             className="mt-4 text-lg text-zinc-400 md:text-xl leading-relaxed"
