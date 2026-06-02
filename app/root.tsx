@@ -17,9 +17,14 @@ import {
 import { SetDocumentLang } from "~/components/SetDocumentLang";
 import { SkipLink } from "~/components/SkipLink";
 import "~/i18n/i18n";
-import "./app.css";
+import cssUrl from "./app.css?url";
 
 export const links: Route.LinksFunction = () => [
+  {
+    rel: "preload",
+    href: cssUrl,
+    as: "style",
+  },
   {
     rel: "icon",
     type: "image/x-icon",
