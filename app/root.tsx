@@ -10,7 +10,10 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import type { Route } from "./+types/root";
-import { GoogleTagManagerBody, GoogleTagManagerHead } from "~/components/GoogleTagManager";
+import {
+  GoogleTagManagerBody,
+  GoogleTagManagerHead,
+} from "~/components/GoogleTagManager";
 import { SetDocumentLang } from "~/components/SetDocumentLang";
 import { SkipLink } from "~/components/SkipLink";
 import "~/i18n/i18n";
@@ -25,16 +28,6 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "apple-touch-icon",
     href: "/apple-touch-icon.png",
-  },
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
 ];
 
