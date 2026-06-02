@@ -26,6 +26,10 @@ export const links: Route.LinksFunction = () => [
     as: "style",
   },
   {
+    rel: "stylesheet",
+    href: cssUrl,
+  },
+  {
     rel: "icon",
     type: "image/x-icon",
     href: "/favicon.ico",
