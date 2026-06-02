@@ -31,9 +31,9 @@ i18n.init({
   },
   ...(isClient && {
     detection: {
-      order: ["localStorage", "navigator"],
-      caches: ["localStorage"],
-      lookupLocalStorage: "i18nextLng",
+      order: ["cookie", "navigator"],
+      caches: ["cookie"],
+      lookupCookie: "i18nextLng",
     },
   }),
 });

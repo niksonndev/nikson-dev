@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "react-router";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
@@ -16,25 +17,14 @@ import {
 } from "~/components/GoogleTagManager";
 import { SetDocumentLang } from "~/components/SetDocumentLang";
 import { SkipLink } from "~/components/SkipLink";
-import "~/i18n/i18n";
+import i18n from "~/i18n/i18n";
 import "./app.css";
 import cssUrl from "./app.css?url";
 
 export const links: Route.LinksFunction = () => [
-  {
-    rel: "preload",
-    href: cssUrl,
-    as: "style",
-  },
-  {
-    rel: "icon",
-    type: "image/x-icon",
-    href: "/favicon.ico",
-  },
-  {
-    rel: "apple-touch-icon",
-    href: "/apple-touch-icon.png",
-  },
+  { rel: "preload", href: cssUrl, as: "style" },
+  { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
   {
     rel: "preload",
     href: "/fonts/Inter-Variable-subset.woff2",
@@ -43,6 +33,13 @@ export const links: Route.LinksFunction = () => [
     crossOrigin: "anonymous",
   },
 ];
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const cookieHeader = request.headers.get("Cookie") ?? "";
+  const match = cookieHeader.match(/i18nextLng=([^;]+)/);
+  const lng = match?.[1] ?? "en";
+  return { lng };
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -70,6 +67,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { lng } = useLoaderData<typeof loader>();
+
+  if (i18n.language !== lng) {
+    i18n.changeLanguage(lng);
+  }
+
   return <Outlet />;
 }
 

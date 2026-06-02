@@ -49,55 +49,30 @@ export default function Home() {
         className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 font-sans px-4"
         id="main-content"
       >
-        <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100">
-          {t("hero.title")}
-        </h1>
-        <motion.div
-          className="flex flex-col items-center justify-center text-center max-w-2xl"
-          variants={container}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.p
-            variants={item}
-            className="mt-4 text-lg text-zinc-400 md:text-xl leading-relaxed"
-          >
-            {t("hero.subtitle")}
-          </motion.p>
+        <div className="flex flex-col items-center justify-center text-center max-w-2xl">
+          <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl text-zinc-100">
+            {t("hero.title")}
+          </h1>
           <motion.div
-            variants={item}
-            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+            className="flex flex-col items-center justify-center text-center w-full"
+            variants={container}
+            initial="hidden"
+            animate="visible"
           >
-            <a
-              href="#projects"
-              className="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-zinc-950"
+            <motion.p
+              variants={item}
+              className="mt-4 text-lg text-zinc-400 md:text-xl leading-relaxed"
             >
-              {t("hero.viewProjects")}
-            </a>
-            <a
-              href="mailto:niksonndev@gmail.com"
-              className="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-zinc-950"
+              {t("hero.subtitle")}
+            </motion.p>
+            <motion.div
+              variants={item}
+              className="mt-10 flex flex-wrap items-center justify-center gap-4"
             >
-              {t("hero.hireMe")}
-            </a>
-            <a
-              href="https://www.linkedin.com/in/nikson-rotondaro"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-lg border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
-            >
-              {t("hero.linkedin")}
-            </a>
-            <a
-              href="https://github.com/niksonndev"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-lg border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
-            >
-              {t("hero.github")}
-            </a>
+              {/* botões */}
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
       </main>
       <section
         id="about"
