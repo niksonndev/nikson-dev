@@ -29,6 +29,13 @@ export const links: Route.LinksFunction = () => [
     rel: "apple-touch-icon",
     href: "/apple-touch-icon.png",
   },
+  {
+    rel: "preload",
+    href: "/fonts/Inter-Variable-subset.woff2",
+    as: "font",
+    type: "font/woff2",
+    crossOrigin: "anonymous",
+  },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
