@@ -5,10 +5,9 @@ import { ProjectCard } from "~/components/ProjectCard";
 import { useTranslation } from "react-i18next";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? "https://www.nikson.dev";
-const TITLE = "Nikson Rotondaro · Full Stack Software Engineer";
+const TITLE = "Nikson Rotondaro · Full-Stack Software Engineer";
 const DESCRIPTION =
-  "Nikson Rotondaro — Full Stack Software Engineer. Portfolio with projects in React, Next.js, Shopify, GTM and real-time applications.";
-
+  "Nikson Rotondaro — Full-Stack Software Engineer. Portfolio with AI products, automation, and production bots: Nerdy Story, Imóvel Radar (17,740+ listings), Job Hunter AI, and Maceió Cine Bot.";
 export function meta(_: Route.MetaArgs) {
   return [
     { title: TITLE },
@@ -155,6 +154,55 @@ export default function Home() {
           </motion.p>
 
           <div className="mt-10">
+            {/* Independent Developer */}
+            <div className="grid grid-cols-[20px_1fr] gap-x-6">
+              <div className="flex flex-col items-center">
+                <span className="h-3.5 w-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950 shrink-0 mt-1" />
+                <div className="flex-1 w-px bg-zinc-700 my-1" />
+              </div>
+              <article className="pb-12">
+                <p className="text-sm uppercase tracking-[0.24em] text-zinc-500">
+                  {t("experience.independent.dates")}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-zinc-100">
+                  {t("experience.independent.company")}
+                </h3>
+                <p className="mt-1 text-zinc-400">
+                  {t("experience.independent.position")}
+                </p>
+                <ul className="mt-4 space-y-2 text-zinc-400 list-disc list-inside">
+                  <li>{t("experience.independent.bullet1")}</li>
+                  <li>{t("experience.independent.bullet2")}</li>
+                  <li>{t("experience.independent.bullet3")}</li>
+                  <li>{t("experience.independent.bullet4")}</li>
+                </ul>
+              </article>
+            </div>
+
+            {/* Freelance Automation */}
+            <div className="grid grid-cols-[20px_1fr] gap-x-6">
+              <div className="flex flex-col items-center">
+                <span className="h-3.5 w-3.5 rounded-full bg-zinc-100 ring-4 ring-zinc-950 shrink-0 mt-1" />
+                <div className="flex-1 w-px bg-zinc-700 my-1" />
+              </div>
+              <article className="pb-12">
+                <p className="text-sm uppercase tracking-[0.24em] text-zinc-500">
+                  {t("experience.automation.dates")}
+                </p>
+                <h3 className="mt-2 text-lg font-semibold text-zinc-100">
+                  {t("experience.automation.company")}
+                </h3>
+                <p className="mt-1 text-zinc-400">
+                  {t("experience.automation.position")}
+                </p>
+                <ul className="mt-4 space-y-2 text-zinc-400 list-disc list-inside">
+                  <li>{t("experience.automation.bullet1")}</li>
+                  <li>{t("experience.automation.bullet2")}</li>
+                  <li>{t("experience.automation.bullet3")}</li>
+                </ul>
+              </article>
+            </div>
+
             {/* Pixelmatters */}
             <div className="grid grid-cols-[20px_1fr] gap-x-6">
               <div className="flex flex-col items-center">
@@ -237,43 +285,49 @@ export default function Home() {
           <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
             <li>
               <ProjectCard
+                title={t("projects.nerdyStory.title")}
+                description={t("projects.nerdyStory.description")}
+                tags={[
+                  "Next.js",
+                  "React",
+                  "TypeScript",
+                  "Vercel AI SDK",
+                  "Zod",
+                ]}
+                liveUrl="https://nerdy-story.vercel.app/"
+                githubUrl="https://github.com/niksonndev/nerdy-story"
+              />
+            </li>
+            <li>
+              <ProjectCard
                 title={t("projects.imovelRadar.title")}
                 description={t("projects.imovelRadar.description")}
-                tags={["Python", "SQLite", "Oracle Cloud", "CloudScraper"]}
+                tags={[
+                  "Python",
+                  "FastAPI",
+                  "Telegram",
+                  "Neon Postgres",
+                  "Turborepo",
+                ]}
                 liveUrl="https://t.me/imovel_radar_bot"
                 githubUrl="https://github.com/niksonndev/imovel-radar"
               />
             </li>
             <li>
               <ProjectCard
-                title={t("projects.maceioCine.title")}
-                description={t("projects.maceioCine.description")}
-                tags={["Node.js", "Telegram Bot API", "Axios", "Express", "Docker"]}
-                liveUrl="https://t.me/MaceioCine_bot"
-                githubUrl="https://github.com/niksonndev/maceio-cinema-bot"
-              />
-            </li>
-            <li>
-              <ProjectCard
                 title={t("projects.jobHunterAi.title")}
                 description={t("projects.jobHunterAi.description")}
-                tags={["TypeScript", "SQLite3", "Playwright", "Agentic AI"]}
+                tags={["TypeScript", "OpenAI", "Playwright", "SQLite"]}
                 githubUrl="https://github.com/niksonndev/job-hunter-ai"
               />
             </li>
             <li>
               <ProjectCard
-                title={t("projects.shopifyBundle.title")}
-                description={t("projects.shopifyBundle.description")}
-                tags={[
-                  "Shopify",
-                  "Liquid",
-                  "Alpine.js",
-                  "Tailwind CSS",
-                  "Shopify AJAX API",
-                ]}
-                githubUrl="https://github.com/niksonndev/shopify-advanced-bundle"
-                analyticsIntegrated
+                title={t("projects.maceioCine.title")}
+                description={t("projects.maceioCine.description")}
+                tags={["Node.js", "Telegram Bot API", "Express", "Docker"]}
+                liveUrl="https://t.me/MaceioCine_bot"
+                githubUrl="https://github.com/niksonndev/maceio-cinema-bot"
               />
             </li>
           </ul>

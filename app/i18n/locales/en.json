@@ -1,7 +1,7 @@
 {
   "hero": {
     "title": "Hi, I'm Nikson Rotondaro",
-    "subtitle": "Full Stack Software Engineer",
+    "subtitle": "Full-Stack Software Engineer",
     "viewProjects": "View Projects",
     "hireMe": "Hire Me",
     "linkedin": "LinkedIn",
@@ -9,22 +9,22 @@
   },
   "projects": {
     "title": "Projects",
-    "subtitle": "Selected work in e-commerce and web analytics.",
-    "imovelRadar": {
-      "title": "Imovel Radar",
-      "description": "Tracks 4,900+ active listings, running daily at 8AM to detect and deliver new properties in real time via Telegram."
+    "subtitle": "Selected independent products — AI, automation, and production bots.",
+    "nerdyStory": {
+      "title": "Nerdy Story",
+      "description": "AI-graded interactive storybook for ages 7–9 — LLM scores meaning, not spelling; ~125 eval cases per domain plus held-out sets; live on Vercel."
     },
-    "maceioCine": {
-      "title": "Maceió Cine Bot",
-      "description": "Eliminated Playwright entirely by reverse-engineering internal API endpoints — cutting payload 86% (109KB → 14.6KB) and enabling free deployment on Render."
+    "imovelRadar": {
+      "title": "Imóvel Radar",
+      "description": "Tracks 17,740+ Maceió rental listings — Telegram bot delivers matching carousels from neighbourhood and price filters in real time."
     },
     "jobHunterAi": {
       "title": "Job Hunter AI",
-      "description": "Evaluates 1,000 job listings for ~$0.13, autonomously matching opportunities to my resume and logging results to Google Sheets."
+      "description": "Evaluates 1,000 job listings for ~$0.13 — LinkedIn scrape → GPT-4.1 mini fit scoring → ATS-optimized resume per role."
     },
-    "shopifyBundle": {
-      "title": "Shopify Advanced Bundle",
-      "description": "Proof of concept demonstrating advanced Shopify bundling with a lightweight frontend stack — built to explore conversion-focused custom commerce logic."
+    "maceioCine": {
+      "title": "Maceió Cine Bot",
+      "description": "Cut payload ~93% (~112KB → ~8KB) for 3 theater chains — live Telegram showtimes on Render via Ingresso.com API."
     },
     "liveDemo": "Live Demo",
     "github": "GitHub",
@@ -32,37 +32,54 @@
   },
   "experience": {
     "title": "Work experience",
-    "subtitle": "Roles and collaboration across product, analytics, and front-end engineering.",
+    "subtitle": "Roles spanning product engineering, automation, analytics, and front-end.",
+    "independent": {
+      "company": "Independent Developer",
+      "position": "Self-Employed · Remote — Maceió, Brazil",
+      "dates": "Feb 2026 – Present",
+      "bullet1": "Shipped 4 production products: Nerdy Story, Imóvel Radar (17,740+ listings), Job Hunter AI, and Maceió Cine Bot.",
+      "bullet2": "Built Nerdy Story semantic grading with multi-model failover and an LLM eval harness (~125 cases/domain).",
+      "bullet3": "Architected Imóvel Radar as a Turborepo monorepo (FastAPI + Telegram + Next.js + Neon) on Oracle Cloud.",
+      "bullet4": "Rebuilt nikson.dev on React Router v7 SSR — cut LCP by ~2s by removing animation from the LCP element."
+    },
+    "automation": {
+      "company": "Freelance Automation Engineer",
+      "position": "Self-Employed · Remote — Maceió, Brazil",
+      "dates": "Apr 2025 – Feb 2026",
+      "bullet1": "Designed automation workflows with AutoHotkey v2 and AdsPower for repetitive browser and desktop processes.",
+      "bullet2": "Built scripts for browser profiles, task orchestration, data handling, and long-running workflow reliability.",
+      "bullet3": "Translated manual processes into repeatable programmatic automation with error handling and sync."
+    },
     "pixelmatters": {
       "company": "Pixelmatters",
-      "position": "Front-end Engineer · Remote (Portugal)",
+      "position": "Front-end Engineer · Porto, Portugal (Hybrid)",
       "dates": "Aug 2022 – Mar 2023",
-      "bullet1": "Contributed to stack decisions for BrightAction using Vite and SSR.",
-      "bullet2": "Served as technical reference for Tailwind CSS and TanStack Query.",
-      "bullet3": "Built a reusable component library with Storybook.",
-      "bullet4": "Collaborated daily with US-based clients in English."
+      "bullet1": "Contributed to BrightAction architecture decisions — Vite, SSR, and JWT authentication.",
+      "bullet2": "Team reference for Tailwind CSS and TanStack Query; built a Storybook component library.",
+      "bullet3": "Translated Figma handoffs into pixel-accurate production components; daily English collaboration with US clients.",
+      "bullet4": "Presented Cypress vs. Playwright E2E comparison; Jest coverage discipline on Quantic (quantic.edu)."
     },
     "cognizant": {
       "company": "Cognizant",
-      "position": "Web Analytics Analyst (JS/GTM) · São Paulo, Brazil",
+      "position": "Web Analytics Analyst · Remote — São Paulo, Brazil",
       "dates": "Aug 2021 – Mar 2022",
-      "bullet1": "Delivered custom tracking for 900+ international e-commerces in six months.",
-      "bullet2": "Implemented GTM and GA4 across Shopify, WordPress, and Magento.",
-      "bullet3": "Worked as part of a global Google project to standardize analytics implementation."
+      "bullet1": "Delivered GTM and GA4 for 900+ international e-commerces in 6 months — averaging 7 clients/day.",
+      "bullet2": "Configured custom events, dataLayer adaptations, and conversion tracking on WordPress and Magento.",
+      "bullet3": "Primary technical contact for Spanish-speaking clients; authored English reports for Google stakeholders."
     },
     "softWrap": {
       "company": "SoftWrap",
       "position": "Front-end Developer · Brazil",
       "dates": "Jun 2021 – Nov 2021",
-      "bullet1": "Built web apps with React.js and mobile apps with React Native.",
-      "bullet2": "Integrated REST and GraphQL services for client-facing applications."
+      "bullet1": "Built web and mobile apps with React.js, React Native/Expo, and REST/GraphQL integrations.",
+      "bullet2": "Developed TV Shelf, a React Native app for tracking watched series; implemented from Figma designs."
     }
   },
   "about": {
     "title": "About me",
-    "paragraph1": "I build real products that solve real problems—real estate bots on Telegram, cinema listings scrapers, AI agents for job hunting. I've shipped code to production for international SaaS platforms, working in distributed teams across Brazil, Portugal, and the US.",
-    "paragraph2": "I'm equally comfortable architecting backend systems, building React frontends, or scripting automation. What matters to me is solving the problem efficiently—whether that's optimizing database queries or simplifying complex logic so it just works.",
-    "paragraph3": "Based in Maceió, Brazil. Open to remote freelance projects and full-time roles. If you need someone who ships, let's talk."
+    "paragraph1": "Full-Stack Software Engineer who ships end-to-end — PostgreSQL to Docker/cloud. Delivered GTM/GA4 for 900+ e-commerces (Cognizant / Google), front-end on an international product team (Pixelmatters), and independent AI products in production.",
+    "paragraph2": "Impact by the numbers: Imóvel Radar catalogues 17,740+ rentals; Maceió Cine Bot cut session payloads ~112KB → ~8KB; Job Hunter AI scores ~1,000 listings for ~$0.13; nikson.dev cut LCP by ~2s.",
+    "paragraph3": "Based in Maceió, Brazil (BRT). Open to remote and international roles. Portuguese (native), English (C1), Spanish (C1)."
   },
   "footer": {
     "available": "Available for projects"
