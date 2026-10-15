@@ -241,6 +241,7 @@ function buildHouse(
   rng: Rng,
   index: number,
   detail: boolean,
+  extra = true,
 ): { solid: Piece[]; glow: Piece[]; width: number } {
   const width = range(rng, 3.9, 6.6);
   const height = range(rng, 8.5, 14);
@@ -268,6 +269,7 @@ function buildHouse(
       for (let c = 0; c < cols; c++) {
         const x = -width / 2 + margin + stepX * (c + 0.5);
         solid.push(box(COLORS.trim, [windowW + 0.24, windowH + 0.26, 0.12], [x, y, 0.03]));
+        if (extra) solid.push(box(COLORS.trim, [windowW + 0.34, 0.09, 0.22], [x, y - windowH / 2 - 0.09, 0.08]));
         glow.push(
           box(
             chance(rng, 0.58)
@@ -334,21 +336,22 @@ function buildHouse(
       for (let c = 0; c < cols; c++) {
         const x = -width / 2 + margin + stepX * (c + 0.5);
         solid.push(box(COLORS.trim, [windowW + 0.34, 0.09, 0.22], [x, y - windowH / 2 - 0.09, 0.08]));
-        solid.push(box(COLORS.trim, [0.055, windowH, 0.13], [x, y, 0.11]));
-        if (chance(rng, 0.55)) {
+        if (extra) solid.push(box(COLORS.trim, [0.055, windowH, 0.13], [x, y, 0.11]));
+        if (extra && chance(rng, 0.55)) {
           solid.push(box(COLORS.trim, [windowW, 0.055, 0.13], [x, y + windowH * 0.18, 0.11]));
         }
-        if (chance(rng, 0.16)) {
+        if (extra && chance(rng, 0.16)) {
           const shutter = shade(pick(rng, COLORS.door), 1.15);
           solid.push(box(shutter, [windowW * 0.42, windowH, 0.06], [x - windowW * 0.76, y, 0.08]));
           solid.push(box(shutter, [windowW * 0.42, windowH, 0.06], [x + windowW * 0.76, y, 0.08]));
         }
       }
-      solid.push(box(shade(color, 1.07), [width + 0.08, 0.1, 0.16], [0, y + 1.45, 0.05]));
+      if (extra) solid.push(box(shade(color, 1.07), [width + 0.08, 0.1, 0.16], [0, y + 1.45, 0.05]));
     }
 
-    // balconies with railings, a chair and a plant, on some of the storeys
-    for (let f = 0; f < floors; f++) {
+    if (extra) {
+      // balconies with railings, a chair and a plant, on some of the storeys
+      for (let f = 0; f < floors; f++) {
       if (width < 4.4 || !chance(rng, 0.34)) continue;
       const y = 3.6 + f * 2.7;
       const bw = Math.min(width - 1.1, range(rng, 1.9, 2.9));
@@ -381,15 +384,18 @@ function buildHouse(
       }
     }
 
-    // wall anchors, drainpipe and cornice: the small stuff that sells a facade
-    for (let a = 0; a < 3; a++) {
-      solid.push(box(COLORS.trimDark, [0.16, 0.16, 0.07], [-width / 2 + 0.34, 4.6 + a * 2.2, 0.06]));
-      solid.push(box(COLORS.trimDark, [0.16, 0.16, 0.07], [width / 2 - 0.34, 4.6 + a * 2.2, 0.06]));
-    }
+    if (extra) {
+      // wall anchors, drainpipe and cornice: the small stuff that sells a facade
+      for (let a = 0; a < 3; a++) {
+        solid.push(box(COLORS.trimDark, [0.16, 0.16, 0.07], [-width / 2 + 0.34, 4.6 + a * 2.2, 0.06]));
+        solid.push(box(COLORS.trimDark, [0.16, 0.16, 0.07], [width / 2 - 0.34, 4.6 + a * 2.2, 0.06]));
+      }
     solid.push(
       cyl(COLORS.trimDark, [0.075, 0.075], height - 0.3, [width / 2 - 0.2, (height - 0.3) / 2, 0.14], [0, 0, 0], 6),
     );
     solid.push(box(shade(color, 1.12), [width + 0.12, 0.22, 0.28], [0, height - 0.14, 0.02]));
+    }
+    }
   }
 
   // gable
@@ -501,12 +507,13 @@ function buildHouseRow(
   side: 1 | -1,
   detailFrom: number,
   detailTo: number,
+  rich = true,
 ): void {
   let x = -LAYOUT.worldX - 6;
   let index = 0;
   while (x < LAYOUT.worldX + 6) {
-    const detail = x > detailFrom && x < detailTo;
-    const house = buildHouse(rng, index++, detail);
+    const detail = rich ? x > detailFrom && x < detailTo : true;
+    const house = buildHouse(rng, index++, detail, rich);
     const centerX = x + house.width / 2;
     const inBridgeGap = LAYOUT.bridges.some((bx) => Math.abs(centerX - bx) < LAYOUT.bridgeGap);
     const inSideStreet = LAYOUT.sideStreets.some((sx) => Math.abs(centerX - sx) < LAYOUT.sideStreetHalf + 1.6);
@@ -1641,9 +1648,9 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   await nextFrame();
 
   onProgress("houses", 0.38);
-  buildHouseRow(walls, glow, rng, 1, light ? 1 : -98, light ? -1 : 98);
+  buildHouseRow(walls, glow, rng, 1, -98, 98, !light);
   await nextFrame();
-  buildHouseRow(walls, glow, rng, -1, light ? 1 : -98, light ? -1 : 98);
+  buildHouseRow(walls, glow, rng, -1, -98, 98, !light);
   await nextFrame();
 
   onProgress("streets", 0.46);
