@@ -99,6 +99,10 @@
       "houses": "Brick houses",
       "skyline": "Towers and windmill",
       "props": "Trees, lamps and bikes",
+      "furniture": "Racks, signs and details",
+      "green": "Grass and planters",
+      "secrets": "Hidden secrets",
+      "decor": "Bunting and washing lines",
       "boats": "Boats",
       "materials": "Water and sky",
       "ready": "Ready"

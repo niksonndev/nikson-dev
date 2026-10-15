@@ -29,10 +29,11 @@ export const LAYOUT = {
   /** x positions of the two canal bridges */
   bridges: [-48, 48] as readonly number[],
   /** half width of a bridge deck along X */
-  bridgeHalfWidth: 2.8,
-  /** how far a bridge deck reaches along Z (it lands on the pavement) */
-  bridgeSpan: 15.5,
-  bridgeRise: 2.3,
+  bridgeHalfWidth: 2.4,
+  /** how far a bridge deck reaches along Z: it lands on the street, not on the houses */
+  bridgeSpan: 13.6,
+  /** how high the arch rises in the middle */
+  bridgeRise: 1.75,
   /** the bike is stopped by the house facades at this |z| */
   blockEdgeZ: 15.5,
   /** width of the gap in the house rows where a bridge lands */
@@ -53,7 +54,8 @@ export function heightAt(x: number, z: number): number {
     const az = Math.abs(z);
     if (az > LAYOUT.bridgeSpan) continue;
     const t = 1 - az / LAYOUT.bridgeSpan;
-    return LAYOUT.groundY + Math.pow(Math.sin((t * Math.PI) / 2), 1.2) * LAYOUT.bridgeRise;
+    // raised cosine: no kink where the deck meets the street
+    return LAYOUT.groundY + ((1 - Math.cos(t * Math.PI)) / 2) * LAYOUT.bridgeRise;
   }
   return LAYOUT.groundY;
 }

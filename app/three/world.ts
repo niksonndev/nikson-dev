@@ -48,10 +48,10 @@ export type WorldHandle = {
   setQuality: (quality: Quality) => void;
 };
 
-const MAX_SPEED = 13;
-const BOOST_SPEED = 19;
-const ACCEL = 7;
-const BRAKE = 13;
+const MAX_SPEED = 17;
+const BOOST_SPEED = 25;
+const ACCEL = 15;
+const BRAKE = 26;
 const RIDER_RADIUS = 0.45;
 const POI_RANGE = 5;
 
@@ -246,18 +246,18 @@ export function createWorld(options: WorldOptions): WorldHandle {
       }
       if (brake > 0) {
         if (state.speed > 0.2) state.speed -= BRAKE * dt;
-        else state.speed = Math.max(state.speed - ACCEL * 0.5 * dt, -3.5);
+        else state.speed = Math.max(state.speed - ACCEL * 0.6 * dt, -5);
       }
     }
 
     // drag + rolling resistance so the bike coasts to a stop
-    state.speed -= state.speed * 0.42 * dt;
+    state.speed -= state.speed * 0.12 * dt;
     if (Math.abs(state.speed) < 0.06) state.speed = 0;
     if (!moving && throttle === 0) state.speed *= 0.9;
 
     const speedFactor = THREE.MathUtils.clamp(Math.abs(state.speed) / 4, 0, 1);
     const steerRate =
-      1.75 * speedFactor * (1 - 0.32 * THREE.MathUtils.clamp(Math.abs(state.speed) / BOOST_SPEED, 0, 1));
+      2.25 * speedFactor * (1 - 0.24 * THREE.MathUtils.clamp(Math.abs(state.speed) / BOOST_SPEED, 0, 1));
     const turn = steer * steerRate * dt * Math.sign(state.speed >= 0 ? 1 : -1);
     state.yaw -= turn;
 
@@ -333,7 +333,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
     const targetPitch = THREE.MathUtils.clamp(Math.atan(climb) + airPitch, -0.6, 0.6);
     state.pitch += (targetPitch - state.pitch) * Math.min(1, dt * 8);
 
-    const targetLean = steer * 0.34 * THREE.MathUtils.clamp(Math.abs(state.speed) / 7, 0, 1);
+    const targetLean = steer * 0.42 * THREE.MathUtils.clamp(Math.abs(state.speed) / 8, 0, 1);
     state.lean += (targetLean - state.lean) * Math.min(1, dt * 6);
 
     state.wheelAngle -= (state.speed * dt) / 0.35;

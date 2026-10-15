@@ -173,20 +173,20 @@ function buildBridges(builder: MeshBuilder, glow: MeshBuilder): void {
     }
 
     // stone arch seen from the canal
-    const arch = new THREE.CylinderGeometry(6.3, 6.3, halfWidth * 2 + 0.3, 20, 1, true, 0, Math.PI);
+    const arch = new THREE.CylinderGeometry(6.65, 6.65, halfWidth * 2 + 0.2, 22, 1, true, 0, Math.PI);
     arch.rotateZ(-Math.PI / 2);
-    builder.addGeometry(arch, COLORS.bridgeStone, matrix([bx, LAYOUT.groundY + 2.1, 0], [0, 0, 0], [1, 0.42, 1]));
+    builder.addGeometry(arch, COLORS.bridgeStone, matrix([bx, 1.3, 0], [0, 0, 0], [1, 0.5, 1]));
     arch.dispose();
 
-    // pilasters framing the landing on both quays
+    // squat abutments where the deck meets the street
     for (const sz of [-1, 1]) {
       for (const sx of [-1, 1]) {
         builder.add(
-          box(
-            COLORS.bridgeStone,
-            [0.7, 2.7, 0.7],
-            [bx + sx * (halfWidth + 0.35), LAYOUT.groundY + 1.35, sz * (span - 0.4)],
-          ),
+          box(COLORS.bridgeStone, [0.5, 1.5, 0.9], [
+            bx + sx * (halfWidth - 0.25),
+            LAYOUT.groundY + 0.75,
+            sz * (span - 0.45),
+          ]),
         );
       }
       const z = sz * (span - 2.4);
@@ -295,18 +295,67 @@ function buildHouse(
     }
 
     const doorX = -width / 2 + 0.9 + rng() * Math.max(0.2, width - 2.6);
-    solid.push(box(pick(rng, COLORS.door), [1.18, 2.5, 0.18], [doorX, 1.25, 0.05]));
-    solid.push(box(COLORS.trim, [1.5, 0.18, 0.22], [doorX, 2.6, 0.06]));
-    solid.push(box(COLORS.trim, [0.16, 2.5, 0.2], [doorX - 0.66, 1.25, 0.05]));
-    solid.push(box(COLORS.trim, [0.16, 2.5, 0.2], [doorX + 0.66, 1.25, 0.05]));
-    solid.push(box(COLORS.pavement, [1.6, 0.2, 0.8], [doorX, LAYOUT.groundY - 0.02, 0.32]));
-    glow.push(box(chance(rng, 0.65) ? COLORS.windowLit : COLORS.windowDark, [0.6, 0.46, 0.08], [doorX, 3.05, 0.09]));
-
-    if (chance(rng, 0.22)) {
-      const awning = pick(rng, [0x9c3a34, 0x2f5d57, 0xd8b45c, 0x3a4f7a]);
-      solid.push(box(awning, [width * 0.82, 0.12, 1.5], [0, 3.8, 0.75], [0.24, 0, 0]));
-      solid.push(box(COLORS.metalDark, [width * 0.82, 0.1, 0.1], [0, 3.56, 1.45]));
+    if (chance(rng, 0.32)) {
+      // a little shop on the ground floor
+      const shopW = width * 0.74;
+      const glass = chance(rng, 0.5) ? COLORS.windowLit : COLORS.windowLitAlt;
+      solid.push(box(COLORS.trimDark, [shopW + 0.36, 2.45, 0.16], [0, 1.62, 0.04]));
+      glow.push(box(glass, [shopW, 2.05, 0.1], [0, 1.62, 0.1]));
+      solid.push(box(COLORS.trim, [shopW + 0.55, 0.2, 0.44], [0, 2.92, 0.17]));
+      // mullions so the shop window reads as glass, not a blank panel
+      solid.push(box(COLORS.trimDark, [0.08, 2.05, 0.12], [0, 1.62, 0.12]));
+      solid.push(box(COLORS.trimDark, [shopW, 0.08, 0.12], [0, 2.2, 0.12]));
+      solid.push(box(COLORS.trimDark, [0.06, 2.05, 0.12], [shopW * 0.34, 1.62, 0.12]));
+      solid.push(box(COLORS.trimDark, [0.06, 2.05, 0.12], [-shopW * 0.34, 1.62, 0.12]));
+      solid.push(box(shade(color, 0.8), [shopW + 0.7, 0.1, 1.0], [0, 3.12, 0.45], [0.17, 0, 0]));
+      solid.push(box(COLORS.metalDark, [0.06, 0.06, 0.75], [width * 0.3, 3.6, 0.38]));
+      solid.push(box(pick(rng, COLORS.flag), [0.09, 0.52, 0.52], [width * 0.3, 3.2, 0.68]));
+      // a couple of crates by the door
+      solid.push(box(shade(COLORS.boatWood, 0.95), [0.5, 0.4, 0.45], [doorX + 0.4, 0.2, 0.42]));
+    } else {
+      solid.push(box(pick(rng, COLORS.door), [1.18, 2.5, 0.18], [doorX, 1.25, 0.05]));
+      solid.push(box(COLORS.trim, [1.5, 0.18, 0.22], [doorX, 2.6, 0.06]));
+      solid.push(box(COLORS.trim, [0.16, 2.5, 0.2], [doorX - 0.66, 1.25, 0.05]));
+      solid.push(box(COLORS.trim, [0.16, 2.5, 0.2], [doorX + 0.66, 1.25, 0.05]));
+      solid.push(box(COLORS.pavement, [1.6, 0.2, 0.8], [doorX, LAYOUT.groundY - 0.02, 0.32]));
+      glow.push(
+        box(chance(rng, 0.65) ? COLORS.windowLit : COLORS.windowDark, [0.6, 0.46, 0.08], [doorX, 3.05, 0.09]),
+      );
+      if (chance(rng, 0.22)) {
+        const awning = pick(rng, [0x9c3a34, 0x2f5d57, 0xd8b45c, 0x3a4f7a]);
+        solid.push(box(awning, [width * 0.82, 0.12, 1.5], [0, 3.8, 0.75], [0.24, 0, 0]));
+        solid.push(box(COLORS.metalDark, [width * 0.82, 0.1, 0.1], [0, 3.56, 1.45]));
+      }
     }
+
+    // sills, muntins, the odd pair of shutters and a floor band per storey
+    for (let f = 0; f < floors; f++) {
+      const y = 3.6 + f * 2.7;
+      for (let c = 0; c < cols; c++) {
+        const x = -width / 2 + margin + stepX * (c + 0.5);
+        solid.push(box(COLORS.trim, [windowW + 0.34, 0.09, 0.22], [x, y - windowH / 2 - 0.09, 0.08]));
+        solid.push(box(COLORS.trim, [0.055, windowH, 0.13], [x, y, 0.11]));
+        if (chance(rng, 0.55)) {
+          solid.push(box(COLORS.trim, [windowW, 0.055, 0.13], [x, y + windowH * 0.18, 0.11]));
+        }
+        if (chance(rng, 0.16)) {
+          const shutter = shade(pick(rng, COLORS.door), 1.15);
+          solid.push(box(shutter, [windowW * 0.42, windowH, 0.06], [x - windowW * 0.76, y, 0.08]));
+          solid.push(box(shutter, [windowW * 0.42, windowH, 0.06], [x + windowW * 0.76, y, 0.08]));
+        }
+      }
+      solid.push(box(shade(color, 1.07), [width + 0.08, 0.1, 0.16], [0, y + 1.45, 0.05]));
+    }
+
+    // wall anchors, drainpipe and cornice: the small stuff that sells a facade
+    for (let a = 0; a < 3; a++) {
+      solid.push(box(COLORS.trimDark, [0.16, 0.16, 0.07], [-width / 2 + 0.34, 4.6 + a * 2.2, 0.06]));
+      solid.push(box(COLORS.trimDark, [0.16, 0.16, 0.07], [width / 2 - 0.34, 4.6 + a * 2.2, 0.06]));
+    }
+    solid.push(
+      cyl(COLORS.trimDark, [0.075, 0.075], height - 0.3, [width / 2 - 0.2, (height - 0.3) / 2, 0.14], [0, 0, 0], 6),
+    );
+    solid.push(box(shade(color, 1.12), [width + 0.12, 0.22, 0.28], [0, height - 0.14, 0.02]));
   }
 
   // gable
@@ -899,6 +948,147 @@ function buildClutter(
   }
 }
 
+export type Flyer = {
+  group: THREE.Group;
+  cx: number;
+  cz: number;
+  radius: number;
+  height: number;
+  speed: number;
+  phase: number;
+  wings: THREE.Object3D[];
+};
+
+/** Bike racks with bikes, bins, signs, cellar hatches, mooring rings and gulls. */
+function buildFurniture(
+  solid: MeshBuilder,
+  nature: MeshBuilder,
+  colliders: Collider[],
+  rng: Rng,
+): Flyer[] {
+  const g = LAYOUT.groundY;
+  const flyers: Flyer[] = [];
+  const rackSide = (x: number) => LAYOUT.bridges.some((bx) => Math.abs(x - bx) < LAYOUT.bridgeGap + 1);
+
+  for (const side of [1, -1] as const) {
+    // fietsenrek: metal hoops with bikes leaning on them
+    for (let r = 0; r < 9; r++) {
+      const x = -LAYOUT.worldX + 18 + r * 28 + range(rng, -6, 6);
+      if (rackSide(x)) continue;
+      const z = side * (LAYOUT.facadeZ - 1.05);
+      const hoops = 5;
+      for (let i = 0; i < hoops; i++) {
+        const hx = x + i * 0.66;
+        solid.addAll([
+          cyl(COLORS.metalDark, [0.03, 0.03], 0.52, [hx - 0.3, g + 0.26, z], [0, 0, 0], 6),
+          cyl(COLORS.metalDark, [0.03, 0.03], 0.52, [hx + 0.3, g + 0.26, z], [0, 0, 0], 6),
+          box(COLORS.metalDark, [0.66, 0.06, 0.06], [hx, g + 0.53, z]),
+        ]);
+      }
+      colliders.push({ x: x + hoops * 0.33, z, r: 1.5 });
+      for (let i = 0; i < 3; i++) {
+        if (!chance(rng, 0.8)) continue;
+        solid.addAll(
+          place(
+            parkedBikePieces(rng),
+            matrix([x + i * 1.3, g, z + range(rng, -0.45, 0.45)], [0, Math.PI / 2 + range(rng, -0.25, 0.25), 0]),
+          ),
+        );
+      }
+    }
+
+    // cellar hatches in the pavement, very Amsterdam
+    for (let i = 0; i < 10; i++) {
+      const x = range(rng, -LAYOUT.worldX + 10, LAYOUT.worldX - 10);
+      if (rackSide(x)) continue;
+      solid.add(box(0x6b6f72, [1.15, 0.05, 0.95], [x, g + 0.03, side * (LAYOUT.facadeZ - 1.05)]));
+    }
+
+    // bins, signs and lamp bollards along the quay edge
+    for (let i = 0; i < 12; i++) {
+      const x = range(rng, -LAYOUT.worldX + 12, LAYOUT.worldX - 12);
+      if (rackSide(x)) continue;
+      const z = side * (LAYOUT.canalHalf + 1.85);
+      const kind = Math.floor(range(rng, 0, 3));
+      if (kind === 0) {
+        solid.addAll([
+          cyl(COLORS.metalDark, [0.3, 0.26], 0.85, [x, g + 0.43, z], [0, 0, 0], 8),
+          cyl(shade(COLORS.metalDark, 1.45), [0.34, 0.34], 0.08, [x, g + 0.9, z], [0, 0, 0], 8),
+        ]);
+        colliders.push({ x, z, r: 0.45 });
+      } else if (kind === 1) {
+        // blue bicycle-path sign
+        solid.addAll([
+          cyl(COLORS.metalDark, [0.05, 0.06], 2.3, [x, g + 1.15, z], [0, 0, 0], 6),
+          cyl(0x2f6fb0, [0.32, 0.32], 0.05, [x, g + 2.2, z], [0, 0, Math.PI / 2], 14),
+          box(0xf2ebdd, [0.03, 0.05, 0.3], [x + 0.04, g + 2.16, z]),
+          box(0xf2ebdd, [0.03, 0.16, 0.14], [x + 0.04, g + 2.24, z], [0, 0, -0.3]),
+        ]);
+        colliders.push({ x, z, r: 0.3 });
+      } else {
+        // stacked planters
+        nature.addAll([
+          ...bushPieces(rng, [x, g + 0.3, z], 0.7),
+          box(COLORS.boatWood, [0.8, 0.3, 0.5], [x, g + 0.15, z]),
+        ]);
+        colliders.push({ x, z, r: 0.5 });
+      }
+    }
+
+    // mooring rings on the canal wall
+    for (let x = -LAYOUT.worldX + 6; x < LAYOUT.worldX - 4; x += 7) {
+      solid.add({
+        geometry: new THREE.TorusGeometry(0.15, 0.032, 5, 10),
+        color: COLORS.metalDark,
+        transform: matrix([x, -0.3, side * (LAYOUT.canalHalf - 0.06)]),
+      });
+    }
+  }
+
+  // gulls circling over the canal
+  const gullBody = new THREE.SphereGeometry(0.12, 8, 6);
+  const gullWing = new THREE.BoxGeometry(0.06, 0.02, 0.62);
+  const gullMaterial = new MeshStandardNodeMaterial({ color: 0xf4f2ee, flatShading: true, roughness: 0.75 });
+  const gullDark = new MeshStandardNodeMaterial({ color: 0x3b3f44, flatShading: true, roughness: 0.7 });
+  for (let i = 0; i < 5; i++) {
+    const group = new THREE.Group();
+    const body = new THREE.Mesh(gullBody, gullMaterial);
+    body.scale.set(2.1, 0.8, 0.8);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.075, 6, 5), gullMaterial);
+    head.position.set(0.22, 0.05, 0);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.12, 5), gullDark);
+    beak.rotation.z = -Math.PI / 2;
+    beak.position.set(0.34, 0.04, 0);
+    const wings: THREE.Object3D[] = [];
+    for (const sign of [1, -1]) {
+      const pivot = new THREE.Group();
+      pivot.position.set(0, 0.04, sign * 0.08);
+      const wing = new THREE.Mesh(gullWing, gullMaterial);
+      wing.position.z = sign * 0.3;
+      pivot.add(wing);
+      group.add(pivot);
+      wings.push(pivot);
+    }
+    group.add(body, head, beak);
+    group.castShadow = true;
+    const cx = range(rng, -70, 70);
+    const cz = range(rng, -3, 3);
+    group.position.set(cx, 12, cz);
+    flyers.push({
+      group,
+      cx,
+      cz,
+      radius: range(rng, 8, 20),
+      height: range(rng, 10, 16),
+      speed: range(rng, 0.22, 0.4) * (chance(rng, 0.5) ? 1 : -1),
+      phase: rng() * Math.PI * 2,
+      wings,
+    });
+  }
+
+  return flyers;
+}
+
 /** Tulip bundles hidden around the city, one per spot. */
 function buildCollectibles(root: THREE.Group, rng: Rng): Collectible[] {
   const spots: [number, number][] = [
@@ -1037,9 +1227,10 @@ function buildLetters(
   }
 }
 
-/** Materials (TSL): the street gets a brick/cobble pattern, the greenery sways. */
+/** Materials (TSL): brick streets and walls, swaying greenery. */
 export function buildMaterials(): {
   ground: MeshStandardNodeMaterial;
+  walls: MeshStandardNodeMaterial;
   solid: MeshStandardNodeMaterial;
   nature: MeshStandardNodeMaterial;
   glow: MeshBasicNodeMaterial;
@@ -1056,6 +1247,26 @@ export function buildMaterials(): {
     const patch = sin(p.x.mul(0.07)).mul(cos(p.z.mul(0.09))).mul(0.5).add(0.5);
     const tone = hash.mul(0.3).add(0.85).mul(patch.mul(0.18).add(0.91));
     ground.colorNode = vec3(tone).mul(float(1).sub(edge.mul(0.36)));
+  }
+
+  // brick courses with mortar joints, on every wall
+  const walls = new MeshStandardNodeMaterial({
+    vertexColors: true,
+    flatShading: true,
+    roughness: 0.92,
+    metalness: 0,
+  });
+  {
+    const p = positionWorld;
+    const course = floor(p.y.mul(4.2));
+    const along = p.x.mul(1.7).add(course.mul(0.5));
+    const fx = fract(along).sub(0.5);
+    const fy = fract(p.y.mul(4.2)).sub(0.5);
+    const joint = smoothstep(float(0.4), float(0.5), max(abs(fx), abs(fy)));
+    const hash = sin(floor(along).mul(12.9898).add(course.mul(78.233))).mul(43758.5453).fract();
+    const patch = sin(p.y.mul(0.6)).mul(cos(p.x.mul(0.22))).mul(0.5).add(0.5);
+    const tone = hash.mul(0.16).add(0.94).mul(patch.mul(0.1).add(0.95));
+    walls.colorNode = vec3(tone).mul(float(1).sub(joint.mul(0.34)));
   }
 
   const solid = new MeshStandardNodeMaterial({
@@ -1085,7 +1296,7 @@ export function buildMaterials(): {
   }
 
   const glow = new MeshBasicNodeMaterial({ vertexColors: true });
-  return { ground, solid, nature, glow };
+  return { ground, walls, solid, nature, glow };
 }
 
 /* ------------------------------------------------------------ boats & life */
@@ -1212,6 +1423,7 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   const rng = makeRng(20261015);
   const root = new THREE.Group();
   const ground = new MeshBuilder();
+  const walls = new MeshBuilder();
   const solid = new MeshBuilder();
   const nature = new MeshBuilder();
   const glow = new MeshBuilder();
@@ -1228,9 +1440,9 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   await nextFrame();
 
   onProgress("houses", 0.38);
-  buildHouseRow(solid, glow, rng, 1, -98, 98);
+  buildHouseRow(walls, glow, rng, 1, -98, 98);
   await nextFrame();
-  buildHouseRow(solid, glow, rng, -1, -98, 98);
+  buildHouseRow(walls, glow, rng, -1, -98, 98);
   await nextFrame();
 
   onProgress("skyline", 0.52);
@@ -1241,6 +1453,11 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   buildProps(solid, glow, nature, colliders, rng);
   buildMarket(solid, glow, nature, colliders, rng);
   buildClutter(solid, nature, colliders, rng);
+  await nextFrame();
+
+  onProgress("furniture", 0.69);
+  const flyers = buildFurniture(solid, nature, colliders, rng);
+  for (const flyer of flyers) root.add(flyer.group);
   await nextFrame();
 
   onProgress("green", 0.74);
@@ -1291,6 +1508,9 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   const materials = buildMaterials();
   const groundMesh = new THREE.Mesh(ground.build(), materials.ground);
   groundMesh.receiveShadow = true;
+  const wallsMesh = new THREE.Mesh(walls.build(), materials.walls);
+  wallsMesh.castShadow = true;
+  wallsMesh.receiveShadow = true;
   const solidMesh = new THREE.Mesh(solid.build(), materials.solid);
   solidMesh.castShadow = true;
   solidMesh.receiveShadow = true;
@@ -1298,10 +1518,10 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   natureMesh.castShadow = true;
   natureMesh.receiveShadow = true;
   const glowMesh = new THREE.Mesh(glow.build(), materials.glow);
-  for (const mesh of [groundMesh, solidMesh, natureMesh, glowMesh]) mesh.frustumCulled = false;
+  for (const mesh of [groundMesh, wallsMesh, solidMesh, natureMesh, glowMesh]) mesh.frustumCulled = false;
   const water = buildWater();
   const sky = buildSky();
-  root.add(groundMesh, solidMesh, natureMesh, glowMesh, water, sky);
+  root.add(groundMesh, wallsMesh, solidMesh, natureMesh, glowMesh, water, sky);
 
   const cameraPosition = new THREE.Vector3();
   const update = (t: number, dt: number) => {
@@ -1317,6 +1537,20 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
       drifter.object.rotation.z = Math.sin(t * 0.9 + drifter.phase) * 0.04;
     }
     sky.position.copy(cameraPosition);
+    for (const flyer of flyers) {
+      const angle = t * flyer.speed + flyer.phase;
+      flyer.group.position.set(
+        flyer.cx + Math.cos(angle) * flyer.radius,
+        flyer.height + Math.sin(t * 0.7 + flyer.phase) * 0.7,
+        flyer.cz + Math.sin(angle) * flyer.radius,
+      );
+      const direction = flyer.speed >= 0 ? 1 : -1;
+      flyer.group.rotation.y = Math.atan2(-Math.cos(angle) * direction, -Math.sin(angle) * direction);
+      for (let i = 0; i < flyer.wings.length; i++) {
+        const sign = i === 0 ? 1 : -1;
+        flyer.wings[i].rotation.x = Math.sin(t * 9 + flyer.phase) * 0.5 * sign;
+      }
+    }
     for (const item of collectibles) {
       if (item.taken) continue;
       item.group.rotation.y = t * 1.1 + item.id;
