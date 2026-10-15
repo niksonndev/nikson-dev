@@ -3,7 +3,8 @@ import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/three";
 import type { PoiId } from "~/three/layout";
-import type { WorldHandle } from "~/three/world";
+import { POI_ANCHORS, LAYOUT } from "~/three/layout";
+import type { Quality, Telemetry, WorldHandle } from "~/three/world";
 
 const POI_ORDER: PoiId[] = ["projects", "about", "stack", "made", "contact"];
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? "https://www.nikson.dev";
@@ -35,10 +36,39 @@ export default function ThreeRoute() {
   const [openPoi, setOpenPoi] = useState<PoiId | null>(null);
   const [started, setStarted] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [quality, setQuality] = useState<Quality>("high");
+  const [collected, setCollected] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [done, setDone] = useState(false);
+  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
 
   useEffect(() => {
     setIsTouch(window.matchMedia("(hover: none)").matches);
   }, []);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const next = worldRef.current?.getTelemetry();
+      if (next) setTelemetry(next);
+    }, 140);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.code === "KeyM") setMapOpen((open) => !open);
+      if (event.code === "Escape") setSettingsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    worldRef.current?.setQuality(quality);
+  }, [quality]);
 
   const closePoi = useCallback(() => {
     setOpenPoi(null);
@@ -69,12 +99,21 @@ export default function ThreeRoute() {
             setOpenPoi(poi);
             handle?.setPaused(true);
           },
+          onCollect: (count, all) => {
+            setCollected(count);
+            setTotal(all);
+            if (all > 0 && count >= all) setDone(true);
+          },
+          onMute: (value) => setMuted(value),
           onError: (error) => {
             console.error("[three] world failed", error);
             setStatus("error");
           },
         });
         worldRef.current = handle;
+        if (import.meta.env.DEV) {
+          (window as unknown as { __world?: WorldHandle }).__world = handle;
+        }
       } catch (error) {
         console.error("[three] failed to load", error);
         if (!cancelled) setStatus("error");
@@ -141,13 +180,86 @@ export default function ThreeRoute() {
           </h1>
           <p className="mt-1 max-w-sm text-sm text-zinc-400 drop-shadow">{t("three.subtitle")}</p>
         </div>
-        {backend && (
-          <span className="pointer-events-none rounded-lg border border-zinc-700/70 bg-zinc-950/70 px-3 py-1.5 text-xs text-zinc-300 backdrop-blur">
-            three.js + TSL
-            <span className="mx-1.5 text-zinc-600">·</span>
-            {backend}
-          </span>
-        )}
+        <div className="pointer-events-auto flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            {total > 0 && (
+              <span className="rounded-lg border border-zinc-700/70 bg-zinc-950/70 px-2.5 py-1.5 text-xs text-zinc-200 backdrop-blur">
+                🌷 {collected}/{total}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setMuted(worldRef.current?.toggleMute() ?? false)}
+              aria-label={t("three.sound")}
+              className="rounded-lg border border-zinc-700/70 bg-zinc-950/70 px-2.5 py-1.5 text-sm backdrop-blur transition hover:border-zinc-500"
+            >
+              {muted ? "🔇" : "🔊"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMapOpen((open) => !open)}
+              aria-label={t("three.mapTitle")}
+              aria-pressed={mapOpen}
+              className={`rounded-lg border px-2.5 py-1.5 text-sm backdrop-blur transition ${
+                mapOpen
+                  ? "border-zinc-300 bg-zinc-100 text-zinc-950"
+                  : "border-zinc-700/70 bg-zinc-950/70 hover:border-zinc-500"
+              }`}
+            >
+              🗺
+            </button>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((open) => !open)}
+              aria-label={t("three.quality.title")}
+              aria-expanded={settingsOpen}
+              className="rounded-lg border border-zinc-700/70 bg-zinc-950/70 px-2.5 py-1.5 text-sm backdrop-blur transition hover:border-zinc-500"
+            >
+              ⚙
+            </button>
+            {backend && (
+              <span className="hidden rounded-lg border border-zinc-700/70 bg-zinc-950/70 px-3 py-1.5 text-xs text-zinc-300 backdrop-blur sm:inline">
+                three.js + TSL
+                <span className="mx-1.5 text-zinc-600">·</span>
+                {backend}
+              </span>
+            )}
+          </div>
+
+          {settingsOpen && (
+            <div className="w-60 rounded-xl border border-zinc-700/70 bg-zinc-950/90 p-3 text-left backdrop-blur">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
+                {t("three.quality.title")}
+              </p>
+              <div className="mt-2 flex gap-1.5">
+                {(["low", "medium", "high"] as const).map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setQuality(level)}
+                    className={`flex-1 rounded-md px-2 py-1 text-xs transition ${
+                      quality === level
+                        ? "bg-zinc-100 text-zinc-950"
+                        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                    }`}
+                  >
+                    {t(`three.quality.${level}`)}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => worldRef.current?.reset()}
+                className="mt-3 w-full rounded-md bg-zinc-800 px-2 py-1.5 text-xs text-zinc-300 transition hover:bg-zinc-700"
+              >
+                {t("three.controls.reset")} · R
+              </button>
+              <p className="mt-3 text-[11px] leading-relaxed text-zinc-500">{t("three.quality.hint")}</p>
+            </div>
+          )}
+
+          {mapOpen && telemetry && <Minimap telemetry={telemetry} label={t("three.mapTitle")} />}
+        </div>
       </header>
 
       {/* loading */}
@@ -303,6 +415,18 @@ export default function ThreeRoute() {
                 </button>
                 <button
                   type="button"
+                  aria-label={t("three.controls.jump")}
+                  className="h-14 w-14 rounded-xl border border-zinc-700/70 bg-zinc-950/80 text-lg backdrop-blur active:bg-zinc-800"
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    setStarted(true);
+                    worldRef.current?.jump();
+                  }}
+                >
+                  ⤴
+                </button>
+                <button
+                  type="button"
                   aria-label={t("three.controls.pedal")}
                   className="h-14 w-20 rounded-xl border border-zinc-600/70 bg-zinc-100/90 text-sm font-semibold text-zinc-950 backdrop-blur active:bg-zinc-300"
                   {...hold({ throttle: 1 })}
@@ -319,8 +443,11 @@ export default function ThreeRoute() {
                   ["S / ↓", t("three.controls.brake")],
                   ["A D / ← →", t("three.controls.steer")],
                   ["Shift", t("three.controls.boost")],
+                  ["Space", t("three.controls.jump")],
                   ["E", t("three.controls.enter")],
                   ["H", t("three.controls.bell")],
+                  ["L", t("three.sound")],
+                  ["M", t("three.mapTitle")],
                   ["R", t("three.controls.reset")],
                   ["drag", t("three.controls.camera")],
                 ] as const
@@ -334,6 +461,16 @@ export default function ThreeRoute() {
               ))}
             </ul>
           )}
+        </div>
+      )}
+
+      {/* all tulips found */}
+      {done && !openPoi && (
+        <div className="pointer-events-none absolute inset-x-0 top-24 flex justify-center px-4">
+          <div className="rounded-2xl border border-emerald-400/40 bg-emerald-500/20 px-5 py-3 text-center backdrop-blur">
+            <p className="text-sm font-semibold text-emerald-50">{t("three.allFound")}</p>
+            <p className="mt-0.5 text-xs text-emerald-100/80">{t("three.allFoundHint")}</p>
+          </div>
         </div>
       )}
 
@@ -351,5 +488,95 @@ export default function ThreeRoute() {
         </ul>
       </section>
     </main>
+  );
+}
+
+/** Strip map of the two quays, the canal, bridges, secrets and the rider. */
+function Minimap({ telemetry, label }: { telemetry: Telemetry; label: string }) {
+  const width = 264;
+  const height = 96;
+  const stepX = 0.9;
+  const toX = (x: number) => (x + LAYOUT.worldX) * stepX + 4;
+  const toY = (z: number) => (z + 22) * 2;
+  const heading =
+    (Math.atan2(-2 * Math.sin(telemetry.yaw), Math.cos(telemetry.yaw)) * 180) / Math.PI;
+
+  return (
+    <div className="rounded-xl border border-zinc-700/70 bg-zinc-950/90 p-2 backdrop-blur">
+      <div className="mb-1 flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-zinc-500">
+        <span>{label}</span>
+        <span className="font-mono text-[10px] normal-case tracking-normal text-zinc-400">
+          M
+        </span>
+      </div>
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={label}
+        className="rounded-lg bg-zinc-900"
+      >
+        {/* canal */}
+        <rect x={0} y={toY(-6)} width={width} height={24} fill="#2f8fa3" />
+        {/* quays */}
+        <rect x={0} y={toY(6)} width={width} height={20} fill="#574f45" />
+        <rect x={0} y={toY(-16)} width={width} height={20} fill="#574f45" />
+        {/* houses */}
+        <rect x={0} y={toY(16)} width={width} height={12} fill="#8a4c38" />
+        <rect x={0} y={toY(-22)} width={width} height={12} fill="#8a4c38" />
+        {/* bridges */}
+        {LAYOUT.bridges.map((bx) => (
+          <rect
+            key={bx}
+            x={toX(bx) - 2.5}
+            y={toY(-15.5)}
+            width={5}
+            height={31}
+            fill="#e0d5c0"
+          />
+        ))}
+        {/* points of interest */}
+        {(Object.keys(POI_ANCHORS) as PoiId[]).map((id) => {
+          const anchor = POI_ANCHORS[id];
+          return (
+            <circle
+              key={id}
+              cx={toX(anchor.x)}
+              cy={toY(anchor.z)}
+              r={3.2}
+              fill="#ffd79a"
+              stroke="#3a2f22"
+              strokeWidth={0.8}
+            />
+          );
+        })}
+        {/* uncollected tulips */}
+        {telemetry.items.map((item, index) =>
+          item.taken ? null : (
+            <rect
+              key={index}
+              x={toX(item.x) - 1.8}
+              y={toY(item.z) - 1.8}
+              width={3.6}
+              height={3.6}
+              fill="#e0544f"
+              transform={`rotate(45 ${toX(item.x)} ${toY(item.z)})`}
+            />
+          ),
+        )}
+        {/* the rider */}
+        <polygon
+          points="7,0 -4,4.5 -4,-4.5"
+          fill="#ffffff"
+          stroke="#111114"
+          strokeWidth={0.8}
+          transform={`translate(${toX(telemetry.x)} ${toY(telemetry.z)}) rotate(${heading})`}
+        />
+      </svg>
+      <p className="mt-1 text-[10px] text-zinc-500">
+        {Math.round(Math.abs(telemetry.speed) * 3.6)} km/h
+      </p>
+    </div>
   );
 }

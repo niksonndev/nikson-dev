@@ -107,6 +107,17 @@
     "tapToRide": "Tap the screen to start pedalling",
     "tap": "tap",
     "close": "Close",
+    "sound": "Sound",
+    "mapTitle": "Map",
+    "allFound": "You found every tulip!",
+    "allFoundHint": "The whole city is yours now. Thanks for riding.",
+    "quality": {
+      "title": "Quality",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "hint": "Low drops shadows and bloom for slower phones."
+    },
     "errorTitle": "The 3D world could not load",
     "errorBody": "Your browser (or GPU) could not start WebGL. The rest of the portfolio is still here.",
     "controls": {
@@ -118,6 +129,7 @@
       "bell": "Bell",
       "reset": "Reset",
       "camera": "Drag camera",
+      "jump": "Jump",
       "left": "Steer left",
       "right": "Steer right"
     },

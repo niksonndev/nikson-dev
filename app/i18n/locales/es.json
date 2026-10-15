@@ -107,6 +107,17 @@
     "tapToRide": "Toca la pantalla para pedalear",
     "tap": "toca",
     "close": "Cerrar",
+    "sound": "Sonido",
+    "mapTitle": "Mapa",
+    "allFound": "¡Encontraste todos los tulipanes!",
+    "allFoundHint": "La ciudad es toda tuya. Gracias por pasear.",
+    "quality": {
+      "title": "Calidad",
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta",
+      "hint": "Baja apaga sombras y brillo para móviles más lentos."
+    },
     "errorTitle": "No se pudo cargar el mundo 3D",
     "errorBody": "Tu navegador (o la tarjeta gráfica) no pudo iniciar WebGL. El resto del portafolio sigue aquí.",
     "controls": {
@@ -118,6 +129,7 @@
       "bell": "Timbre",
       "reset": "Reiniciar",
       "camera": "Girar cámara",
+      "jump": "Saltar",
       "left": "Girar a la izquierda",
       "right": "Girar a la derecha"
     },

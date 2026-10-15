@@ -51,9 +51,19 @@ export const SUN_COLOR = new THREE.Color(COLORS.sun);
 export type City = {
   root: THREE.Group;
   colliders: Collider[];
+  collectibles: Collectible[];
   update(t: number, dt: number): void;
   /** keeps the sky dome centred on the camera */
   setCamera(position: THREE.Vector3): void;
+};
+
+/** A tulip bundle you can pick up by riding over it. */
+export type Collectible = {
+  id: number;
+  x: number;
+  z: number;
+  group: THREE.Group;
+  taken: boolean;
 };
 
 const nextFrame = () =>
@@ -889,6 +899,50 @@ function buildClutter(
   }
 }
 
+/** Tulip bundles hidden around the city, one per spot. */
+function buildCollectibles(root: THREE.Group, rng: Rng): Collectible[] {
+  const spots: [number, number][] = [
+    [-104, 9.6], [-86, -12.6], [-64, -10.4], [-46, 14.4], [-26, 10.6], [-8, -9.4],
+    [10, 12.4], [26, -12.4], [44, 9.4], [62, 14.4], [82, -10.6], [100, 12.6],
+    [-14, 6.95], [70, -6.95],
+  ];
+  const collectibles: Collectible[] = [];
+  spots.forEach(([x, z], index) => {
+    const group = new THREE.Group();
+    const stemColor = 0x5f9a4a;
+    const petal = pick(rng, COLORS.tulip);
+    const body = new MeshBuilder();
+    body.addAll([
+      cyl(stemColor, [0.03, 0.04], 0.62, [0, 0.31, 0], [0, 0, 0], 5),
+      box(shade(stemColor, 0.9), [0.26, 0.05, 0.1], [0.1, 0.34, 0], [0, 0, 0.4]),
+      box(petal, [0.17, 0.3, 0.17], [0, 0.78, 0]),
+      box(shade(petal, 1.15), [0.2, 0.16, 0.2], [0, 0.94, 0]),
+      box(shade(petal, 0.85), [0.3, 0.1, 0.1], [0, 1.02, 0], [0, 0.7, 0]),
+    ]);
+    const mesh = new THREE.Mesh(
+      body.build(),
+      new MeshStandardNodeMaterial({ vertexColors: true, flatShading: true, roughness: 0.7 }),
+    );
+    mesh.castShadow = true;
+    const glow = new THREE.Mesh(
+      new THREE.TorusGeometry(0.55, 0.05, 5, 20),
+      new MeshBasicNodeMaterial({ color: shade(petal, 1.25) }),
+    );
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.y = 0.06;
+    const diamond = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.16, 0),
+      new MeshBasicNodeMaterial({ color: shade(petal, 1.2) }),
+    );
+    diamond.position.y = 1.5;
+    group.add(mesh, glow, diamond);
+    group.position.set(x, heightAt(x, z) + 0.05, z);
+    root.add(group);
+    collectibles.push({ id: index, x, z, group, taken: false });
+  });
+  return collectibles;
+}
+
 /** A small market square with striped stalls. */
 function buildMarket(
   solid: MeshBuilder,
@@ -1193,6 +1247,10 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   buildNature(nature, colliders, rng);
   await nextFrame();
 
+  onProgress("secrets", 0.79);
+  const collectibles = buildCollectibles(root, rng);
+  await nextFrame();
+
   onProgress("decor", 0.82);
   buildBunting(solid, rng);
   buildLaundry(solid, rng);
@@ -1259,11 +1317,17 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
       drifter.object.rotation.z = Math.sin(t * 0.9 + drifter.phase) * 0.04;
     }
     sky.position.copy(cameraPosition);
+    for (const item of collectibles) {
+      if (item.taken) continue;
+      item.group.rotation.y = t * 1.1 + item.id;
+      item.group.position.y = heightAt(item.x, item.z) + 0.05 + Math.sin(t * 2 + item.id) * 0.07;
+    }
   };
 
   return {
     root,
     colliders,
+    collectibles,
     update,
     setCamera(position: THREE.Vector3) {
       cameraPosition.copy(position);

@@ -12,7 +12,7 @@ export type InputState = {
 
 export type VirtualInput = { steer?: number; throttle?: number; brake?: number };
 
-const KEYS: Record<string, keyof InputState | "interact" | "reset" | "bell"> = {
+const KEYS: Record<string, keyof InputState | "interact" | "jump" | "reset" | "bell" | "mute"> = {
   ArrowUp: "throttle",
   KeyW: "throttle",
   ArrowDown: "brake",
@@ -25,9 +25,10 @@ const KEYS: Record<string, keyof InputState | "interact" | "reset" | "bell"> = {
   ShiftRight: "boost",
   KeyE: "interact",
   Enter: "interact",
-  Space: "interact",
+  Space: "jump",
   KeyR: "reset",
   KeyH: "bell",
+  KeyL: "mute",
 };
 
 export type InputController = {
@@ -36,8 +37,10 @@ export type InputController = {
   detach(): void;
   setVirtual(input: VirtualInput): void;
   takeInteract(): boolean;
+  takeJump(): boolean;
   takeReset(): boolean;
   takeBell(): boolean;
+  takeMute(): boolean;
   clear(): void;
 };
 
@@ -45,8 +48,10 @@ export function createInput(): InputController {
   const pressed = new Set<string>();
   const virtual: VirtualInput = { steer: 0, throttle: 0, brake: 0 };
   let interact = false;
+  let jump = false;
   let reset = false;
   let bell = false;
+  let mute = false;
 
   const state: InputState = { throttle: 0, brake: 0, steer: 0, boost: false };
 
@@ -70,8 +75,10 @@ export function createInput(): InputController {
     if (event.repeat) return;
     pressed.add(event.code);
     if (mapped === "interact") interact = true;
+    if (mapped === "jump") jump = true;
     if (mapped === "reset") reset = true;
     if (mapped === "bell") bell = true;
+    if (mapped === "mute") mute = true;
     refresh();
   }
 
@@ -107,6 +114,11 @@ export function createInput(): InputController {
       interact = false;
       return value;
     },
+    takeJump() {
+      const value = jump;
+      jump = false;
+      return value;
+    },
     takeReset() {
       const value = reset;
       reset = false;
@@ -117,11 +129,18 @@ export function createInput(): InputController {
       bell = false;
       return value;
     },
+    takeMute() {
+      const value = mute;
+      mute = false;
+      return value;
+    },
     clear() {
       pressed.clear();
       interact = false;
+      jump = false;
       reset = false;
       bell = false;
+      mute = false;
       refresh();
     },
   };

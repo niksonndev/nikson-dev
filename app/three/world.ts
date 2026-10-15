@@ -2,12 +2,27 @@ import * as THREE from "three/webgpu";
 import { RenderPipeline, WebGPURenderer } from "three/webgpu";
 import { pass } from "three/tsl";
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
-import { buildCity, SUN_COLOR, SUN_DIR } from "./city";
+import { buildCity, SUN_COLOR, SUN_DIR, type Collectible } from "./city";
 import { createBike } from "./bike";
+import { createAudio } from "./audio";
 import { createInput } from "./input";
 import { LAYOUT, POI_ANCHORS, heightAt, isOnBridge, slopeAt, type Collider, type PoiId } from "./layout";
 import { COLORS } from "./palette";
 import { makeShadowTexture } from "./utils";
+
+export type Quality = "low" | "medium" | "high";
+
+export type Telemetry = {
+  x: number;
+  z: number;
+  yaw: number;
+  speed: number;
+  collected: number;
+  total: number;
+  muted: boolean;
+  backend: string;
+  items: { x: number; z: number; taken: boolean }[];
+};
 
 export type WorldOptions = {
   canvas: HTMLCanvasElement;
@@ -15,6 +30,8 @@ export type WorldOptions = {
   onReady: (info: { backend: string }) => void;
   onNear: (poi: PoiId | null) => void;
   onOpen: (poi: PoiId) => void;
+  onCollect?: (collected: number, total: number) => void;
+  onMute?: (muted: boolean) => void;
   onError: (error: unknown) => void;
 };
 
@@ -23,8 +40,12 @@ export type WorldHandle = {
   setPaused: (paused: boolean) => void;
   setVirtual: (input: { steer?: number; throttle?: number; brake?: number }) => void;
   interact: () => void;
+  jump: () => void;
   reset: () => void;
   resize: (width: number, height: number) => void;
+  getTelemetry: () => Telemetry;
+  toggleMute: () => boolean;
+  setQuality: (quality: Quality) => void;
 };
 
 const MAX_SPEED = 13;
@@ -41,32 +62,6 @@ const MARKER_COLORS: Record<PoiId, number> = {
   contact: 0xe8836a,
   made: 0xd4739a,
 };
-
-function playBell(): void {
-  try {
-    const Ctor =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctor) return;
-    const context = new Ctor();
-    const now = context.currentTime;
-    for (const [index, frequency] of [1860, 2480].entries()) {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, now + index * 0.06);
-      gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02 + index * 0.06);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1 + index * 0.06);
-      oscillator.connect(gain).connect(context.destination);
-      oscillator.start(now + index * 0.06);
-      oscillator.stop(now + 1.2 + index * 0.06);
-    }
-    setTimeout(() => void context.close(), 1600);
-  } catch {
-    /* audio is a bonus, never a blocker */
-  }
-}
 
 /** Golden dust motes drifting through the sunlight, recycled around the rider. */
 function createMotes(): {
@@ -137,7 +132,12 @@ export function createWorld(options: WorldOptions): WorldHandle {
   const bike = createBike();
   const motes = createMotes();
   scene.add(motes.points);
+  const audio = createAudio();
+  let audioReady = false;
   let colliders: Collider[] = [];
+  let collectibles: Collectible[] = [];
+  let totalCollectibles = 0;
+  let backendName = "WebGL2";
   let paused = false;
   let disposed = false;
 
@@ -166,7 +166,8 @@ export function createWorld(options: WorldOptions): WorldHandle {
   const renderPipeline = new RenderPipeline(renderer);
   const scenePass = pass(scene, camera, { samples: 4 });
   const sceneColor = scenePass.getTextureNode();
-  renderPipeline.outputNode = sceneColor.add(bloom(sceneColor, 0.55, 0.5, 0.72));
+  const bloomNode = bloom(sceneColor, 0.55, 0.5, 0.72);
+  renderPipeline.outputNode = sceneColor.add(bloomNode);
 
   // fake contact shadow under the bike
   const shadow = new THREE.Mesh(
@@ -208,6 +209,10 @@ export function createWorld(options: WorldOptions): WorldHandle {
     wheelAngle: 0,
     pedalAngle: 0,
     time: 0,
+    airHeight: 0,
+    airVelocity: 0,
+    airborne: false,
+    collected: 0,
     nearest: null as PoiId | null,
   };
 
@@ -306,13 +311,26 @@ export function createWorld(options: WorldOptions): WorldHandle {
 
     // sit on the terrain, with a little suspension rattle over the bricks
     const groundY = heightAt(state.x, state.z);
+
+    // a hop, with a bit of gravity
+    if (state.airborne) {
+      state.airVelocity -= 16 * dt;
+      state.airHeight += state.airVelocity * dt;
+      if (state.airHeight <= 0) {
+        state.airHeight = 0;
+        state.airVelocity = 0;
+        state.airborne = false;
+      }
+    }
+
     const roll = -state.wheelAngle * 0.35;
     const bump = (Math.sin(roll * 6.5) * 0.018 + Math.sin(roll * 2.3 + 1.1) * 0.013) * speedFactor;
-    bike.root.position.set(state.x, groundY + bump, state.z);
+    bike.root.position.set(state.x, groundY + bump + state.airHeight, state.z);
     bike.root.rotation.y = state.yaw;
 
     const climb = slopeAt(state.x, state.z) * forward.z;
-    const targetPitch = THREE.MathUtils.clamp(Math.atan(climb), -0.55, 0.55);
+    const airPitch = state.airborne ? THREE.MathUtils.clamp(state.airVelocity * 0.06, -0.3, 0.3) : 0;
+    const targetPitch = THREE.MathUtils.clamp(Math.atan(climb) + airPitch, -0.6, 0.6);
     state.pitch += (targetPitch - state.pitch) * Math.min(1, dt * 8);
 
     const targetLean = steer * 0.34 * THREE.MathUtils.clamp(Math.abs(state.speed) / 7, 0, 1);
@@ -400,8 +418,26 @@ export function createWorld(options: WorldOptions): WorldHandle {
     }
   }
 
+  /** Ride over a tulip to pick it up. */
+  function collectNearby(): void {
+    for (const item of collectibles) {
+      if (item.taken) continue;
+      if (Math.hypot(state.x - item.x, state.z - item.z) > 1.7) continue;
+      item.taken = true;
+      item.group.visible = false;
+      state.collected += 1;
+      audio.collect();
+      options.onCollect?.(state.collected, totalCollectibles);
+      if (state.collected >= totalCollectibles) audio.cheer();
+    }
+  }
+
   function onPointerDown(event: PointerEvent): void {
     intro = false;
+    if (!audioReady) {
+      audio.resume();
+      audioReady = true;
+    }
     cameraState.dragging = true;
     cameraState.lastX = event.clientX;
     cameraState.lastY = event.clientY;
@@ -447,10 +483,13 @@ export function createWorld(options: WorldOptions): WorldHandle {
       const backend = (renderer.backend as unknown as { isWebGPUBackend?: boolean })?.isWebGPUBackend
         ? "WebGPU"
         : "WebGL2";
+      backendName = backend;
       const built = await buildCity(options.onProgress);
       if (disposed) return;
 
       colliders = built.colliders;
+      collectibles = built.collectibles;
+      totalCollectibles = collectibles.length;
       scene.add(built.root);
 
       const parent = canvas.parentElement;
@@ -497,13 +536,27 @@ export function createWorld(options: WorldOptions): WorldHandle {
           state.lean = 0;
           state.pitch = 0;
         }
-        if (input.takeBell()) playBell();
+        if (input.takeBell()) audio.bell();
         if (input.takeInteract()) openNearest();
+        if (input.takeMute()) {
+          audio.setMuted(!audio.isMuted());
+          options.onMute?.(audio.isMuted());
+        }
+        if (input.takeJump() && !paused && !state.airborne) {
+          state.airVelocity = 6.4;
+          state.airborne = true;
+        }
+        if (!audioReady && (input.state.throttle > 0 || input.state.brake > 0 || Math.abs(input.state.steer) > 0)) {
+          audio.resume();
+          audioReady = true;
+        }
         if (intro && (input.state.throttle > 0 || input.state.brake > 0 || Math.abs(input.state.steer) > 0.01)) {
           intro = false;
         }
 
         updatePhysics(dt);
+        collectNearby();
+        audio.update(state.speed, state.airborne);
         built.update(state.time, dt);
         built.setCamera(camera.position);
         updateCamera(dt);
@@ -519,7 +572,14 @@ export function createWorld(options: WorldOptions): WorldHandle {
       });
 
       if (import.meta.env.DEV) {
-        (window as unknown as { __ride?: unknown }).__ride = { renderer, scene, camera, state, built };
+        (window as unknown as { __ride?: unknown }).__ride = {
+          renderer,
+          scene,
+          camera,
+          state,
+          built,
+          input,
+        };
       }
     } catch (error) {
       options.onError(error);
@@ -540,6 +600,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
       canvas.removeEventListener("wheel", onWheel);
       document.removeEventListener("visibilitychange", onVisibility);
       resizeObserver?.disconnect();
+      audio.dispose();
       renderer.dispose();
     },
     setPaused(next: boolean) {
@@ -552,6 +613,12 @@ export function createWorld(options: WorldOptions): WorldHandle {
     interact() {
       openNearest();
     },
+    jump() {
+      if (!state.airborne) {
+        state.airVelocity = 6.4;
+        state.airborne = true;
+      }
+    },
     reset() {
       state.x = -38;
       state.z = 10.2;
@@ -562,6 +629,42 @@ export function createWorld(options: WorldOptions): WorldHandle {
     },
     resize(width: number, height: number) {
       onResize(width, height);
+    },
+    getTelemetry() {
+      return {
+        x: state.x,
+        z: state.z,
+        yaw: state.yaw,
+        speed: state.speed,
+        collected: state.collected,
+        total: totalCollectibles,
+        muted: audio.isMuted(),
+        backend: backendName,
+        items: collectibles.map((item) => ({ x: item.x, z: item.z, taken: item.taken })),
+      };
+    },
+    toggleMute() {
+      audio.setMuted(!audio.isMuted());
+      return audio.isMuted();
+    },
+    setQuality(quality: Quality) {
+      const ratio =
+        quality === "low"
+          ? 0.75
+          : quality === "medium"
+            ? Math.min(window.devicePixelRatio, 1.25)
+            : Math.min(window.devicePixelRatio, 2);
+      renderer.setPixelRatio(ratio);
+      const shadows = quality !== "low";
+      renderer.shadowMap.enabled = shadows;
+      sun.castShadow = shadows;
+      motes.points.visible = quality !== "low";
+      renderPipeline.outputNode = quality === "low" ? sceneColor : sceneColor.add(bloomNode);
+      const parent = canvas.parentElement;
+      if (parent) {
+        const rect = parent.getBoundingClientRect();
+        onResize(rect.width, rect.height);
+      }
     },
   };
 }
