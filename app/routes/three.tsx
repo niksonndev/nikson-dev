@@ -89,6 +89,7 @@ export default function ThreeRoute() {
     let raf = 0;
     let frames = 0;
     let measured = 0;
+    let measuredFrames = 0;
     let warmup = 0;
     let decided = false;
     let last = performance.now();
@@ -98,25 +99,21 @@ export default function ThreeRoute() {
       const delta = now - last;
       last = now;
       frames++;
-      // warm up on frames or on time: a slow machine takes forever to reach
-      // a frame count, and the answer is obvious much earlier than that
+      // warm up on frames OR on time: on a machine that renders one frame per
+      // second, waiting for a frame count would take half a minute
       if (warmup < 1200 && frames < 24) {
         warmup += delta;
         raf = window.requestAnimationFrame(tick);
         return;
       }
-      if (frames < 24) {
-        raf = window.requestAnimationFrame(tick);
-        return;
-      }
       measured += delta;
-      if (!decided && measured < 900 && frames < 240) {
+      measuredFrames++;
+      if (!decided && measured < 900 && measuredFrames < 30) {
         raf = window.requestAnimationFrame(tick);
         return;
       }
       decided = true;
-      const samples = frames - 24;
-      const fps = samples > 0 ? 1000 / (measured / samples) : 0;
+      const fps = measuredFrames > 0 ? 1000 / (measured / measuredFrames) : 0;
       const current = order.indexOf(readQuality() ?? "high");
       const next = order[fps < 30 ? 0 : fps < 48 ? Math.min(current, 1) : current];
       if (next !== order[current]) {
