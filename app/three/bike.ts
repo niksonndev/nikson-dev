@@ -91,7 +91,9 @@ function solveJoint(
 }
 
 function mesh(geometry: THREE.BufferGeometry, material: THREE.Material): THREE.Mesh {
-  return new THREE.Mesh(geometry, material);
+  const m = new THREE.Mesh(geometry, material);
+  m.castShadow = true;
+  return m;
 }
 
 const STEER_LIMIT = 0.5;
@@ -253,7 +255,7 @@ export function createBike(): BikeRig {
   const gripLocal = new THREE.Vector3(0.04, 0.18, 0.28);
   const pedalRadius = 0.17;
 
-  const light = new THREE.PointLight(0xffc98a, 8, 18, 2);
+  const light = new THREE.PointLight(0xffc98a, 3.4, 15, 2);
   light.position.set(1.5, 1.0, 0);
   body.add(light);
 

@@ -178,12 +178,42 @@ export default function ThreeRoute() {
         </div>
       )}
 
-      {/* first-interaction hint */}
+      {/* title card before the first input */}
       {status === "ready" && !started && !near && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 flex justify-center">
-          <p className="animate-pulse rounded-full border border-zinc-700/70 bg-zinc-950/80 px-4 py-2 text-sm text-zinc-200 backdrop-blur">
-            {isTouch ? t("three.tapToRide") : t("three.pressToRide")}
-          </p>
+        <div className="pointer-events-none absolute inset-0 flex items-end justify-start p-6 md:items-center">
+          <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-zinc-700/60 bg-zinc-950/70 p-6 text-center shadow-2xl backdrop-blur-md md:text-left">
+            <p className="text-[11px] uppercase tracking-[0.34em] text-zinc-400">
+              {backend && backend === "WebGPU" ? "WebGPU · three.js + TSL" : "three.js + TSL"}
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold text-zinc-50">{t("three.title")}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-300">{t("three.intro")}</p>
+            <button
+              type="button"
+              onClick={() => setStarted(true)}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-white"
+            >
+              <span aria-hidden>🚲</span>
+              {t("three.start")}
+            </button>
+            <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] text-zinc-400 md:justify-start">
+              {(
+                [
+                  ["W / ↑", t("three.controls.pedal")],
+                  ["A D", t("three.controls.steer")],
+                  ["Shift", t("three.controls.boost")],
+                  ["E", t("three.controls.enter")],
+                  ["H", t("three.controls.bell")],
+                ] as const
+              ).map(([key, label]) => (
+                <li key={key} className="flex items-center gap-1.5">
+                  <span className="rounded border border-zinc-700 bg-zinc-900/80 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300">
+                    {key}
+                  </span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
 

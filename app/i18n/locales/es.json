@@ -90,6 +90,8 @@
     "back": "Volver al portafolio",
     "title": "Ámsterdam en bicicleta",
     "subtitle": "Un mundo 3D procedural que corre en tu navegador. Pedalea por los canales y descubre lo que hay por aquí.",
+    "intro": "Un Ámsterdam entero hecho en código, sin un solo archivo 3D descargado. Pedalea por los canales y encuentra los cinco puntos escondidos.",
+    "start": "Empezar a pedalear",
     "building": "Construyendo la ciudad",
     "steps": {
       "quays": "Muelles y calles",

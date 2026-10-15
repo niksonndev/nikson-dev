@@ -90,6 +90,8 @@
     "back": "Voltar ao portfólio",
     "title": "Amsterdã de bike",
     "subtitle": "Um mundo 3D procedural que roda no seu navegador. Pedale pelos canais e descubra o que tem por aqui.",
+    "intro": "Uma Amsterdã inteira feita em código, sem um único arquivo 3D baixado. Pedale pelos canais e ache os cinco pontos escondidos pela cidade.",
+    "start": "Começar a pedalar",
     "building": "Construindo a cidade",
     "steps": {
       "quays": "Cais e ruas",

@@ -3,8 +3,12 @@ import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from "three/webgpu";
 import {
   abs,
   cameraPosition,
+  clamp,
+  cos,
   dot,
   float,
+  floor,
+  fract,
   max,
   mix,
   normalize,
@@ -14,6 +18,7 @@ import {
   sin,
   smoothstep,
   time,
+  vec2,
   vec3,
 } from "three/tsl";
 import { COLORS, brickColor } from "./palette";
@@ -28,6 +33,8 @@ import {
   makeRng,
   matrix,
   pick,
+  plane,
+  planeGeo,
   range,
   shade,
   shapePiece,
@@ -38,7 +45,7 @@ import {
 } from "./utils";
 
 /** Direction that points AT the sun. Shared by the sky shader, the water and the lights. */
-export const SUN_DIR = new THREE.Vector3(-0.72, 0.2, -0.34).normalize();
+export const SUN_DIR = new THREE.Vector3(-0.62, 0.34, -0.42).normalize();
 export const SUN_COLOR = new THREE.Color(COLORS.sun);
 
 export type City = {
@@ -496,9 +503,15 @@ function benchPieces(at: Vec3, rotY: number): Piece[] {
   );
 }
 
-function buildProps(solid: MeshBuilder, glow: MeshBuilder, colliders: Collider[], rng: Rng): void {
+function buildProps(
+  solid: MeshBuilder,
+  glow: MeshBuilder,
+  nature: MeshBuilder,
+  colliders: Collider[],
+  rng: Rng,
+): void {
   const g = LAYOUT.groundY;
-  const nearBridge = (x: number, pad = LAYOUT.bridgeGap + 1) =>
+  const nearBridge = (x: number, pad: number = LAYOUT.bridgeGap + 1) =>
     LAYOUT.bridges.some((bx) => Math.abs(x - bx) < pad);
 
   for (const side of [1, -1] as const) {
@@ -506,7 +519,7 @@ function buildProps(solid: MeshBuilder, glow: MeshBuilder, colliders: Collider[]
     for (let x = -LAYOUT.worldX + 8; x < LAYOUT.worldX - 6; x += range(rng, 11, 17)) {
       if (nearBridge(x)) continue;
       const z = side * (LAYOUT.facadeZ - 1.5);
-      solid.addAll(treePieces(rng, [x, g, z]));
+      nature.addAll(treePieces(rng, [x, g, z]));
       colliders.push({ x, z, r: 0.55 });
       if (chance(rng, 0.3)) {
         const bx = x + 3.4;
@@ -653,6 +666,374 @@ function buildProps(solid: MeshBuilder, glow: MeshBuilder, colliders: Collider[]
   }
 }
 
+/* ------------------------------------------------------------ green & extra */
+
+function grassTuft(rng: Rng, at: Vec3, blades = 4): Piece[] {
+  const pieces: Piece[] = [];
+  const base = pick(rng, COLORS.grass);
+  for (let i = 0; i < blades; i++) {
+    const angle = range(rng, 0, Math.PI * 2);
+    const height = range(rng, 0.24, 0.52);
+    const width = range(rng, 0.05, 0.09);
+    pieces.push(
+      plane(shade(base, range(rng, 0.85, 1.15)), [width, height], [
+        at[0] + Math.cos(angle) * range(rng, 0, 0.17),
+        at[1],
+        at[2] + Math.sin(angle) * range(rng, 0, 0.17),
+      ], [range(rng, -0.1, 0.1), angle, range(rng, -0.22, 0.22)]),
+    );
+  }
+  return pieces;
+}
+
+function bushPieces(rng: Rng, at: Vec3, scale = 1): Piece[] {
+  const color = pick(rng, COLORS.foliage);
+  const pieces: Piece[] = [];
+  for (let i = 0; i < 3; i++) {
+    pieces.push({
+      geometry: icoGeo(range(rng, 0.34, 0.58) * scale, 0),
+      color: shade(color, range(rng, 0.88, 1.12)),
+      transform: matrix(
+        [
+          at[0] + range(rng, -0.42, 0.42) * scale,
+          at[1] + range(rng, 0.24, 0.6) * scale,
+          at[2] + range(rng, -0.42, 0.42) * scale,
+        ],
+        [rng(), rng(), rng()],
+        [1, range(rng, 0.8, 1.1), 1],
+      ),
+    });
+  }
+  return pieces;
+}
+
+function flowerPieces(rng: Rng, at: Vec3, count = 5): Piece[] {
+  const pieces: Piece[] = [];
+  for (let i = 0; i < count; i++) {
+    pieces.push(
+      box(pick(rng, COLORS.tulip), [0.12, range(rng, 0.18, 0.32), 0.12], [
+        at[0] + range(rng, -0.55, 0.55),
+        at[1] + 0.1,
+        at[2] + range(rng, -0.55, 0.55),
+      ]),
+    );
+  }
+  return pieces;
+}
+
+/** Grass along the quays, hedges, flower beds and greenery around the trees. */
+function buildNature(nature: MeshBuilder, colliders: Collider[], rng: Rng): void {
+  const g = LAYOUT.groundY;
+  const nearBridge = (x: number, pad: number = LAYOUT.bridgeGap) =>
+    LAYOUT.bridges.some((bx) => Math.abs(x - bx) < pad);
+
+  for (const side of [1, -1] as const) {
+    for (let x = -LAYOUT.worldX + 2; x < LAYOUT.worldX - 2; x += range(rng, 0.55, 1.2)) {
+      if (nearBridge(x, 3)) continue;
+      nature.addAll(
+        grassTuft(rng, [x, g, side * (LAYOUT.canalHalf + range(rng, 0.7, 1.45))], Math.floor(range(rng, 3, 7))),
+      );
+      if (chance(rng, 0.7)) {
+        nature.addAll(
+          grassTuft(rng, [x, g, side * (LAYOUT.facadeZ - range(rng, 0.2, 0.6))], Math.floor(range(rng, 2, 5))),
+        );
+      }
+    }
+
+    for (let x = -LAYOUT.worldX + 10; x < LAYOUT.worldX - 10; x += range(rng, 24, 38)) {
+      if (nearBridge(x, 8)) continue;
+      const z = side * (LAYOUT.canalHalf + 1.75);
+      if (chance(rng, 0.5)) {
+        nature.addAll(bushPieces(rng, [x, g, z], 1.15));
+        colliders.push({ x, z, r: 0.7 });
+      } else {
+        nature.addAll([
+          box(COLORS.boatWood, [1.5, 0.5, 0.8], [x, g + 0.25, z]),
+          ...flowerPieces(rng, [x, g + 0.5, z], 6),
+        ]);
+        colliders.push({ x, z, r: 0.9 });
+      }
+    }
+
+    for (let x = -LAYOUT.worldX + 8; x < LAYOUT.worldX - 6; x += range(rng, 11, 17)) {
+      if (nearBridge(x)) continue;
+      const z = side * (LAYOUT.facadeZ - 1.5);
+      nature.addAll([
+        ...grassTuft(rng, [x + 0.55, g, z + 0.45], 4),
+        ...grassTuft(rng, [x - 0.45, g, z - 0.55], 3),
+        ...flowerPieces(rng, [x, g, z], 3),
+      ]);
+    }
+  }
+}
+
+/** Bunting strung across the street and washing lines across the canal. */
+function buildBunting(solid: MeshBuilder, rng: Rng): void {
+  for (let x = -LAYOUT.worldX + 24; x < LAYOUT.worldX - 24; x += range(rng, 26, 44)) {
+    const top = 5.7;
+    const z0 = LAYOUT.roadInner - 0.6;
+    const z1 = LAYOUT.facadeZ - 0.6;
+    const segments = 14;
+    for (let i = 0; i < segments; i++) {
+      const t0 = i / segments;
+      const t1 = (i + 1) / segments;
+      const sag = (t: number) => top - Math.sin(t * Math.PI) * 0.85;
+      const y0 = sag(t0);
+      const y1 = sag(t1);
+      const za = z0 + (z1 - z0) * t0;
+      const zb = z0 + (z1 - z0) * t1;
+      const dy = y1 - y0;
+      const dz = zb - za;
+      solid.add(
+        box(COLORS.trimDark, [0.05, 0.05, Math.hypot(dy, dz)], [x, (y0 + y1) / 2, (za + zb) / 2], [
+          Math.atan2(-dy, dz),
+          0,
+          0,
+        ]),
+      );
+      if (i % 2 === 0) {
+        solid.add({
+          geometry: planeGeo(0.32, 0.44),
+          color: pick(rng, COLORS.flag),
+          transform: matrix([x, (y0 + y1) / 2 - 0.44, (za + zb) / 2], [0, range(rng, -0.2, 0.2), 0]),
+        });
+      }
+    }
+  }
+}
+
+function buildLaundry(solid: MeshBuilder, rng: Rng): void {
+  const washing = [0xf2ebdd, 0x8fb6d8, 0xe0a4a4, 0xd8e0c0, 0xf0c94c, 0xb8a8d8, 0xfaf3e6];
+  for (const x of [-98, -64, -12, 26, 74, 112]) {
+    const top = 10;
+    const depth = LAYOUT.facadeZ - 0.5;
+    const segments = 16;
+    for (let i = 0; i < segments; i++) {
+      const t0 = i / segments;
+      const t1 = (i + 1) / segments;
+      const sag = (t: number) => top - Math.sin(t * Math.PI) * 1.5;
+      const y0 = sag(t0);
+      const y1 = sag(t1);
+      const za = depth - 2 * depth * t0;
+      const zb = depth - 2 * depth * t1;
+      const dy = y1 - y0;
+      const dz = zb - za;
+      solid.add(
+        box(COLORS.trimDark, [0.05, 0.05, Math.hypot(dy, dz)], [x, (y0 + y1) / 2, (za + zb) / 2], [
+          Math.atan2(-dy, dz),
+          0,
+          0,
+        ]),
+      );
+      if (i % 2 === 1) {
+        solid.add(
+          box(pick(rng, washing), [range(rng, 0.5, 0.95), range(rng, 0.7, 1.25), 0.05], [
+            x,
+            (y0 + y1) / 2 - range(rng, 0.4, 0.65),
+            (za + zb) / 2,
+          ]),
+        );
+      }
+    }
+  }
+}
+
+/** Street clutter: potted plants, crates, stacked tiles, A-frame signs. */
+function buildClutter(
+  solid: MeshBuilder,
+  nature: MeshBuilder,
+  colliders: Collider[],
+  rng: Rng,
+): void {
+  const g = LAYOUT.groundY;
+  for (const side of [1, -1] as const) {
+    for (let i = 0; i < 30; i++) {
+      const x = range(rng, -LAYOUT.worldX + 8, LAYOUT.worldX - 8);
+      if (LAYOUT.bridges.some((bx) => Math.abs(x - bx) < LAYOUT.bridgeGap + 2)) continue;
+      const z = side * (LAYOUT.facadeZ - range(rng, 0.5, 1.7));
+      const kind = Math.floor(range(rng, 0, 4));
+      if (kind === 0) {
+        solid.add(cone(0x9c5a41, 0.34, 0.46, [x, g + 0.23, z], [0, 0, 0], 8));
+        nature.addAll(bushPieces(rng, [x, g + 0.45, z], 0.6));
+        colliders.push({ x, z, r: 0.45 });
+      } else if (kind === 1) {
+        solid.addAll([
+          box(shade(COLORS.boatWood, 0.95), [0.62, 0.5, 0.52], [x, g + 0.25, z], [0, range(rng, -0.3, 0.3), 0]),
+          box(shade(COLORS.boatWood, 1.12), [0.52, 0.42, 0.44], [x + 0.12, g + 0.7, z + 0.06], [
+            0,
+            range(rng, -0.4, 0.4),
+            0,
+          ]),
+        ]);
+        colliders.push({ x, z, r: 0.55 });
+      } else if (kind === 2) {
+        // a stack of paving stones waiting for a repair
+        for (let s = 0; s < 3; s++) {
+          solid.add(
+            box(shade(COLORS.pavement, range(rng, 0.9, 1.05)), [0.9, 0.14, 0.6], [
+              x + range(rng, -0.1, 0.1),
+              g + 0.07 + s * 0.15,
+              z,
+            ], [0, range(rng, -0.2, 0.2), 0]),
+          );
+        }
+        colliders.push({ x, z, r: 0.7 });
+      } else {
+        solid.addAll([
+          box(pick(rng, [0xe0544f, 0x2f6b62, 0x3f7fbe]), [0.62, 0.85, 0.05], [x - 0.18, g + 0.85, z], [0, 0, 0.22]),
+          box(pick(rng, COLORS.flag), [0.62, 0.85, 0.05], [x + 0.18, g + 0.85, z], [0, 0, -0.22]),
+        ]);
+        colliders.push({ x, z, r: 0.5 });
+      }
+    }
+  }
+}
+
+/** A small market square with striped stalls. */
+function buildMarket(
+  solid: MeshBuilder,
+  glow: MeshBuilder,
+  nature: MeshBuilder,
+  colliders: Collider[],
+  rng: Rng,
+): void {
+  const mx = -72;
+  const g = LAYOUT.groundY;
+  for (let i = 0; i < 4; i++) {
+    const x = mx + i * 5.4;
+    const z = LAYOUT.canalHalf + 4.4;
+    const stripe = pick(rng, [0xe0544f, 0x3f7fbe, 0xf0c94c, 0x2f6b62]);
+    solid.addAll([
+      box(COLORS.boatWood, [3.4, 0.9, 1.6], [x, g + 0.45, z]),
+      box(shade(COLORS.boatWood, 1.1), [3.6, 0.12, 1.8], [x, g + 0.96, z]),
+      box(stripe, [3.9, 0.14, 2.0], [x, g + 2.5, z + 0.2], [0.14, 0, 0]),
+      box(COLORS.metalDark, [3.9, 0.08, 0.08], [x, g + 2.64, z + 1.05]),
+      cyl(COLORS.metalDark, [0.05, 0.05], 2.1, [x - 1.75, g + 1.6, z + 0.95], [0, 0, 0], 6),
+      cyl(COLORS.metalDark, [0.05, 0.05], 2.1, [x + 1.75, g + 1.6, z + 0.95], [0, 0, 0], 6),
+    ]);
+    colliders.push({ x, z, r: 1.7 });
+    for (let c = 0; c < 3; c++) {
+      const cx = x - 1.1 + c * 1.1;
+      solid.addAll([
+        box(COLORS.boatWood, [0.85, 0.3, 0.7], [cx, g + 1.15, z]),
+        box(pick(rng, COLORS.tulip), [0.78, 0.22, 0.62], [cx, g + 1.4, z]),
+      ]);
+    }
+    glow.add(box(COLORS.lampGlass, [1.3, 0.09, 0.09], [x, g + 2.34, z + 1.05]));
+  }
+  nature.addAll(bushPieces(rng, [mx - 4, g, LAYOUT.canalHalf + 3.2], 1.3));
+  nature.addAll(bushPieces(rng, [mx + 20, g, LAYOUT.canalHalf + 3.2], 1.3));
+}
+
+const GLYPHS: Record<string, string[]> = {
+  N: ["10001", "10001", "11001", "10101", "10011", "10001", "10001"],
+  I: ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+  K: ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+  S: ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
+  O: ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+  A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+  E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+  ".": ["00000", "00000", "00000", "00000", "00000", "00000", "00100"],
+};
+
+/** Chunky block letters standing on the quay, the way every portfolio world has them. */
+function buildLetters(
+  solid: MeshBuilder,
+  colliders: Collider[],
+  text: string,
+  at: Vec3,
+  cell: number,
+  depth: number,
+  rotY: number,
+  rng: Rng,
+): void {
+  const palette = [COLORS.bikeFrameAlt, COLORS.jacket, 0x3f7fbe, COLORS.bikeFrame, COLORS.trim];
+  const rows = 7;
+  const cols = 5;
+  let cursor = 0;
+  let index = 0;
+  for (const char of text) {
+    const glyph = GLYPHS[char];
+    if (glyph) {
+      const color = palette[index++ % palette.length];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (glyph[r][c] !== "1") continue;
+          const along = (cursor * (cols + 1) + c) * cell + cell / 2;
+          const up = (rows - r - 1) * cell + cell / 2;
+          solid.add(
+            box(shade(color, range(rng, 0.96, 1.04)), [cell, cell, depth], [
+              at[0] + Math.cos(rotY) * along,
+              at[1] + up,
+              at[2] - Math.sin(rotY) * along,
+            ], [0, rotY, 0]),
+          );
+        }
+      }
+    }
+    cursor += 1;
+  }
+  const width = cursor * (cols + 1) * cell;
+  for (let along = 0; along < width; along += 2.4) {
+    colliders.push({
+      x: at[0] + Math.cos(rotY) * along,
+      z: at[2] - Math.sin(rotY) * along,
+      r: 1.3,
+    });
+  }
+}
+
+/** Materials (TSL): the street gets a brick/cobble pattern, the greenery sways. */
+export function buildMaterials(): {
+  ground: MeshStandardNodeMaterial;
+  solid: MeshStandardNodeMaterial;
+  nature: MeshStandardNodeMaterial;
+  glow: MeshBasicNodeMaterial;
+} {
+  const ground = new MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.93, metalness: 0 });
+  {
+    const p = positionWorld;
+    const row = floor(p.z.mul(2.6));
+    const shifted = p.x.mul(2.6).add(row.mul(0.5));
+    const cell = vec2(floor(shifted), row);
+    const local = vec2(fract(shifted), fract(p.z.mul(2.6))).sub(0.5);
+    const hash = sin(cell.x.mul(12.9898).add(cell.y.mul(78.233))).mul(43758.5453).fract();
+    const edge = smoothstep(float(0.31), float(0.5), max(abs(local.x), abs(local.y)));
+    const patch = sin(p.x.mul(0.07)).mul(cos(p.z.mul(0.09))).mul(0.5).add(0.5);
+    const tone = hash.mul(0.3).add(0.85).mul(patch.mul(0.18).add(0.91));
+    ground.colorNode = vec3(tone).mul(float(1).sub(edge.mul(0.36)));
+  }
+
+  const solid = new MeshStandardNodeMaterial({
+    vertexColors: true,
+    flatShading: true,
+    roughness: 0.88,
+    metalness: 0,
+  });
+
+  const nature = new MeshStandardNodeMaterial({
+    vertexColors: true,
+    flatShading: true,
+    side: THREE.DoubleSide,
+    roughness: 0.86,
+    metalness: 0,
+  });
+  {
+    const shear = clamp(positionLocal.y.sub(0.25).mul(0.6), float(0), float(1));
+    const sway = sin(time.mul(1.6).add(positionLocal.x.mul(0.45)).add(positionLocal.z.mul(0.33)))
+      .mul(0.075)
+      .add(sin(time.mul(2.7).add(positionLocal.z.mul(0.9))).mul(0.03));
+    nature.positionNode = vec3(
+      positionLocal.x.add(sway.mul(shear)),
+      positionLocal.y,
+      positionLocal.z.add(sway.mul(shear).mul(0.7)),
+    );
+  }
+
+  const glow = new MeshBasicNodeMaterial({ vertexColors: true });
+  return { ground, solid, nature, glow };
+}
+
 /* ------------------------------------------------------------ boats & life */
 
 function buildHouseboat(rng: Rng): THREE.Mesh {
@@ -689,11 +1070,14 @@ function buildHouseboat(rng: Rng): THREE.Mesh {
 
 function buildRowboat(): THREE.Mesh {
   const builder = new MeshBuilder();
+  const hull = COLORS.boatHull[2];
   builder.addAll([
-    box(shade(COLORS.boatWood, 1), [2.6, 0.6, 1.2], [0, 0, 0]),
-    box(shade(COLORS.boatTrim, 0.9), [2.2, 0.34, 1.0], [0, 0.4, 0]),
-    box(shade(COLORS.boatWood, 0.85), [0.16, 0.6, 1.24], [1.2, 0.1, 0]),
-    box(shade(COLORS.boatWood, 0.85), [0.16, 0.6, 1.24], [-1.2, 0.1, 0]),
+    box(shade(hull, 1), [2.6, 0.62, 1.25], [0, 0, 0]),
+    box(shade(COLORS.boatWood, 0.9), [2.15, 0.16, 0.95], [0, 0.34, 0]),
+    box(shade(COLORS.boatWood, 1.05), [0.5, 0.1, 1.0], [0.5, 0.24, 0]),
+    box(shade(COLORS.boatWood, 1.05), [0.5, 0.1, 1.0], [-0.5, 0.24, 0]),
+    box(shade(COLORS.boatTrim, 0.95), [0.14, 0.66, 1.3], [1.24, 0.1, 0]),
+    box(shade(COLORS.boatTrim, 0.95), [0.14, 0.66, 1.3], [-1.24, 0.1, 0]),
   ]);
   return new THREE.Mesh(
     builder.build(),
@@ -773,35 +1157,49 @@ function buildWater(): THREE.Mesh {
 export async function buildCity(onProgress: (label: string, value: number) => void): Promise<City> {
   const rng = makeRng(20261015);
   const root = new THREE.Group();
+  const ground = new MeshBuilder();
   const solid = new MeshBuilder();
+  const nature = new MeshBuilder();
   const glow = new MeshBuilder();
   const colliders: Collider[] = [];
   const bobbers: { object: THREE.Object3D; phase: number; amp: number; tilt: number; speed: number }[] = [];
   const drifters: { object: THREE.Object3D; phase: number; speed: number; dir: number }[] = [];
 
-  onProgress("quays", 0.1);
-  buildQuays(solid, rng);
+  onProgress("quays", 0.08);
+  buildQuays(ground, rng);
   await nextFrame();
 
-  onProgress("bridges", 0.24);
+  onProgress("bridges", 0.2);
   buildBridges(solid, glow);
   await nextFrame();
 
-  onProgress("houses", 0.46);
+  onProgress("houses", 0.38);
   buildHouseRow(solid, glow, rng, 1, -98, 98);
   await nextFrame();
   buildHouseRow(solid, glow, rng, -1, -98, 98);
   await nextFrame();
 
-  onProgress("skyline", 0.6);
+  onProgress("skyline", 0.52);
   root.add(buildSkyline(solid, rng));
   await nextFrame();
 
-  onProgress("props", 0.74);
-  buildProps(solid, glow, colliders, rng);
+  onProgress("props", 0.64);
+  buildProps(solid, glow, nature, colliders, rng);
+  buildMarket(solid, glow, nature, colliders, rng);
+  buildClutter(solid, nature, colliders, rng);
   await nextFrame();
 
-  onProgress("boats", 0.86);
+  onProgress("green", 0.74);
+  buildNature(nature, colliders, rng);
+  await nextFrame();
+
+  onProgress("decor", 0.82);
+  buildBunting(solid, rng);
+  buildLaundry(solid, rng);
+  buildLetters(solid, colliders, "NIKSON", [-30, LAYOUT.groundY, -(LAYOUT.facadeZ - 1.5)], 0.38, 0.55, 0, rng);
+  await nextFrame();
+
+  onProgress("boats", 0.88);
   for (let i = 0; i < 8; i++) {
     const spot = -LAYOUT.worldX + 18 + i * range(rng, 26, 36);
     if (Math.abs(spot) > LAYOUT.worldX - 14) break;
@@ -820,7 +1218,7 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   }
   await nextFrame();
 
-  onProgress("boats", 0.92);
+  onProgress("boats", 0.93);
   for (let i = 0; i < 2; i++) {
     const dir = i === 0 ? 1 : -1;
     const boat = buildRowboat();
@@ -832,16 +1230,20 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   await nextFrame();
 
   onProgress("materials", 0.97);
-  const solidMesh = new THREE.Mesh(
-    solid.build(),
-    new MeshStandardNodeMaterial({ vertexColors: true, flatShading: true, roughness: 0.88, metalness: 0 }),
-  );
-  const glowMesh = new THREE.Mesh(glow.build(), new MeshBasicNodeMaterial({ vertexColors: true }));
-  solidMesh.frustumCulled = false;
-  glowMesh.frustumCulled = false;
+  const materials = buildMaterials();
+  const groundMesh = new THREE.Mesh(ground.build(), materials.ground);
+  groundMesh.receiveShadow = true;
+  const solidMesh = new THREE.Mesh(solid.build(), materials.solid);
+  solidMesh.castShadow = true;
+  solidMesh.receiveShadow = true;
+  const natureMesh = new THREE.Mesh(nature.build(), materials.nature);
+  natureMesh.castShadow = true;
+  natureMesh.receiveShadow = true;
+  const glowMesh = new THREE.Mesh(glow.build(), materials.glow);
+  for (const mesh of [groundMesh, solidMesh, natureMesh, glowMesh]) mesh.frustumCulled = false;
   const water = buildWater();
   const sky = buildSky();
-  root.add(solidMesh, glowMesh, water, sky);
+  root.add(groundMesh, solidMesh, natureMesh, glowMesh, water, sky);
 
   const cameraPosition = new THREE.Vector3();
   const update = (t: number, dt: number) => {

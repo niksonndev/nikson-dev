@@ -90,6 +90,8 @@
     "back": "Back to portfolio",
     "title": "Amsterdam by bike",
     "subtitle": "A procedural 3D world running in your browser. Ride along the canals and find what is hidden around here.",
+    "intro": "An entire Amsterdam built in code, without a single downloaded 3D asset. Ride the canals and find the five spots hidden around the city.",
+    "start": "Start riding",
     "building": "Building the city",
     "steps": {
       "quays": "Quays and streets",

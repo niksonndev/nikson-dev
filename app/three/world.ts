@@ -1,5 +1,7 @@
 import * as THREE from "three/webgpu";
-import { WebGPURenderer } from "three/webgpu";
+import { RenderPipeline, WebGPURenderer } from "three/webgpu";
+import { pass } from "three/tsl";
+import { bloom } from "three/addons/tsl/display/BloomNode.js";
 import { buildCity, SUN_COLOR, SUN_DIR } from "./city";
 import { createBike } from "./bike";
 import { createInput } from "./input";
@@ -66,10 +68,61 @@ function playBell(): void {
   }
 }
 
+/** Golden dust motes drifting through the sunlight, recycled around the rider. */
+function createMotes(): {
+  points: THREE.Points;
+  update: (t: number, dt: number, center: THREE.Vector3) => void;
+} {
+  const count = 700;
+  const positions = new Float32Array(count * 3);
+  const phases = new Float32Array(count);
+  const speeds = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 70;
+    positions[i * 3 + 1] = 0.4 + Math.random() * 9;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 46;
+    phases[i] = Math.random() * Math.PI * 2;
+    speeds[i] = 0.25 + Math.random() * 0.7;
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsNodeMaterial({
+    size: 0.14,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    color: new THREE.Color(0xffdcae),
+  });
+  const points = new THREE.Points(geometry, material);
+  points.frustumCulled = false;
+
+  return {
+    points,
+    update(t, dt, center) {
+      const attribute = geometry.getAttribute("position") as THREE.BufferAttribute;
+      const array = attribute.array as Float32Array;
+      for (let i = 0; i < count; i++) {
+        const ix = i * 3;
+        array[ix] += speeds[i] * dt * 1.7;
+        array[ix + 1] += Math.sin(t * 0.7 + phases[i]) * dt * 0.4;
+        array[ix + 2] += Math.cos(t * 0.5 + phases[i]) * dt * 0.3;
+        if (array[ix] > 35) array[ix] = -35;
+        if (array[ix + 1] > 12) array[ix + 1] = 0.3;
+        if (array[ix + 1] < 0.2) array[ix + 1] = 11.5;
+        if (array[ix + 2] > 23) array[ix + 2] = -23;
+        if (array[ix + 2] < -23) array[ix + 2] = 23;
+      }
+      attribute.needsUpdate = true;
+      points.position.set(center.x, 0, center.z);
+    },
+  };
+}
+
 export function createWorld(options: WorldOptions): WorldHandle {
   const { canvas } = options;
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(COLORS.fog, 0.0055);
+  scene.fog = new THREE.FogExp2(COLORS.fog, 0.004);
 
   const camera = new THREE.PerspectiveCamera(56, 1, 0.3, 1200);
   camera.position.set(-44, 4, 10);
@@ -77,9 +130,13 @@ export function createWorld(options: WorldOptions): WorldHandle {
   const renderer = new WebGPURenderer({ canvas, antialias: true, alpha: false });
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.16;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const input = createInput();
   const bike = createBike();
+  const motes = createMotes();
+  scene.add(motes.points);
   let colliders: Collider[] = [];
   let paused = false;
   let disposed = false;
@@ -87,13 +144,29 @@ export function createWorld(options: WorldOptions): WorldHandle {
   scene.add(bike.root);
 
   // lights ---------------------------------------------------------------
-  const hemisphere = new THREE.HemisphereLight(COLORS.ambientSky, COLORS.ambientGround, 1.95);
-  const sun = new THREE.DirectionalLight(SUN_COLOR, 2.4);
+  const hemisphere = new THREE.HemisphereLight(COLORS.ambientSky, COLORS.ambientGround, 1.35);
+  const sun = new THREE.DirectionalLight(SUN_COLOR, 3.5);
   sun.position.copy(SUN_DIR).multiplyScalar(120);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.near = 20;
+  sun.shadow.camera.far = 300;
+  sun.shadow.camera.left = -70;
+  sun.shadow.camera.right = 70;
+  sun.shadow.camera.top = 70;
+  sun.shadow.camera.bottom = -70;
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.05;
   // cool bounce from the opposite side so the shadowed facades never crush to black
-  const fill = new THREE.DirectionalLight(0x7f95c4, 0.55);
+  const fill = new THREE.DirectionalLight(0x8fb4dd, 0.5);
   fill.position.set(-SUN_DIR.x * 80, 40, -SUN_DIR.z * 80);
-  scene.add(hemisphere, sun, fill);
+  scene.add(hemisphere, sun, sun.target, fill);
+
+  // bloom keeps the lamps, lit windows and the sun path on the water alive
+  const renderPipeline = new RenderPipeline(renderer);
+  const scenePass = pass(scene, camera, { samples: 4 });
+  const sceneColor = scenePass.getTextureNode();
+  renderPipeline.outputNode = sceneColor.add(bloom(sceneColor, 0.55, 0.5, 0.72));
 
   // fake contact shadow under the bike
   const shadow = new THREE.Mesh(
@@ -139,6 +212,9 @@ export function createWorld(options: WorldOptions): WorldHandle {
   };
 
   const cameraState = { yawOffset: 0, pitchOffset: 0, distance: 7.2, dragging: false, lastX: 0, lastY: 0 };
+  // before the first input the camera slowly orbits the bike, like a title screen
+  let intro = true;
+  let introSpin = 0;
 
   const forward = new THREE.Vector3();
   const desired = new THREE.Vector3();
@@ -228,9 +304,11 @@ export function createWorld(options: WorldOptions): WorldHandle {
     state.x = nextX;
     state.z = nextZ;
 
-    // sit on the terrain
+    // sit on the terrain, with a little suspension rattle over the bricks
     const groundY = heightAt(state.x, state.z);
-    bike.root.position.set(state.x, groundY, state.z);
+    const roll = -state.wheelAngle * 0.35;
+    const bump = (Math.sin(roll * 6.5) * 0.018 + Math.sin(roll * 2.3 + 1.1) * 0.013) * speedFactor;
+    bike.root.position.set(state.x, groundY + bump, state.z);
     bike.root.rotation.y = state.yaw;
 
     const climb = slopeAt(state.x, state.z) * forward.z;
@@ -260,7 +338,9 @@ export function createWorld(options: WorldOptions): WorldHandle {
 
   function updateCamera(dt: number): void {
     const smoothing = 1 - Math.exp(-6 * dt);
-    const yaw = state.yaw + cameraState.yawOffset;
+    if (intro) introSpin += dt * 0.22;
+    else introSpin *= 1 - Math.min(1, dt * 1.6);
+    const yaw = state.yaw + cameraState.yawOffset + introSpin;
     forwardVector(yaw, forward);
     const back = cameraState.distance + Math.abs(state.speed) * 0.1;
     const height = 2.9 + cameraState.pitchOffset;
@@ -272,6 +352,8 @@ export function createWorld(options: WorldOptions): WorldHandle {
 
     lookAt.set(state.x + forward.x * 3.2, heightAt(state.x, state.z) + 1.5, state.z + forward.z * 3.2);
     camera.lookAt(lookAt);
+    // a touch of camera roll, like every bike game does
+    camera.rotateZ(-state.lean * 0.35);
 
     const targetFov = 56 + THREE.MathUtils.clamp(Math.abs(state.speed), 0, BOOST_SPEED) * 0.55;
     if (Math.abs(camera.fov - targetFov) > 0.05) {
@@ -319,6 +401,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
   }
 
   function onPointerDown(event: PointerEvent): void {
+    intro = false;
     cameraState.dragging = true;
     cameraState.lastX = event.clientX;
     cameraState.lastY = event.clientY;
@@ -416,14 +499,23 @@ export function createWorld(options: WorldOptions): WorldHandle {
         }
         if (input.takeBell()) playBell();
         if (input.takeInteract()) openNearest();
+        if (intro && (input.state.throttle > 0 || input.state.brake > 0 || Math.abs(input.state.steer) > 0.01)) {
+          intro = false;
+        }
 
         updatePhysics(dt);
         built.update(state.time, dt);
         built.setCamera(camera.position);
         updateCamera(dt);
         updatePois(state.time);
+        motes.update(state.time, dt, bike.root.position);
 
-        renderer.render(scene, camera);
+        // keep the shadow frustum centred on the rider
+        sun.target.position.set(state.x, 0, state.z);
+        sun.target.updateMatrixWorld();
+        sun.position.copy(SUN_DIR).multiplyScalar(120).add(sun.target.position);
+
+        renderPipeline.render();
       });
 
       if (import.meta.env.DEV) {

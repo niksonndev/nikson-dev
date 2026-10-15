@@ -143,6 +143,20 @@ export function torus(
   };
 }
 
+/** Unit plane, base at y = 0, facing +Z — used for grass blades and cloth. */
+export function planeGeo(w: number, h: number): THREE.BufferGeometry {
+  return cached(`plane:${w}:${h}`, () => new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0));
+}
+
+export function plane(
+  color: THREE.ColorRepresentation,
+  size: [number, number],
+  at: Vec3,
+  rot: Vec3 = [0, 0, 0],
+): Piece {
+  return { geometry: planeGeo(size[0], size[1]), color, transform: matrix(at, rot) };
+}
+
 export function shapePiece(
   color: THREE.ColorRepresentation,
   shape: THREE.Shape,
