@@ -530,6 +530,7 @@ function buildSideStreets(
   glow: MeshBuilder,
   colliders: Collider[],
   rng: Rng,
+  light = false,
 ): void {
   const { facadeZ, sideStreetHalf: sh, sideStreetDepth: sd, squareHalf, squareZ } = LAYOUT;
   for (const sx of LAYOUT.sideStreets) {
@@ -544,7 +545,7 @@ function buildSideStreets(
       let z = facadeZ + 0.3;
       let index = 0;
       while (z < squareZ - 2.4) {
-        const house = buildHouse(rng, 60 + index++, true);
+        const house = buildHouse(rng, 60 + index++, !light);
         const cz = z + house.width / 2;
         for (const sxSide of [-1, 1] as const) {
           const base = matrix([sx + sxSide * sh, 0, side * cz], [0, sxSide > 0 ? -Math.PI / 2 : Math.PI / 2, 0]);
@@ -558,7 +559,7 @@ function buildSideStreets(
       let bx = sx - squareHalf;
       let bi = 0;
       while (bx < sx + squareHalf) {
-        const house = buildHouse(rng, 90 + bi++, true);
+        const house = buildHouse(rng, 90 + bi++, !light);
         const cx = bx + house.width / 2;
         const base = matrix([cx, 0, side * sd], [0, side > 0 ? Math.PI : 0, 0]);
         walls.addAll(place(house.solid, base));
@@ -569,7 +570,7 @@ function buildSideStreets(
         let z2 = squareZ - 0.8;
         let i2 = 0;
         while (z2 < sd - 4.6) {
-          const house = buildHouse(rng, 120 + i2++, true);
+          const house = buildHouse(rng, 120 + i2++, !light);
           const cz = z2 + house.width / 2;
           const base = matrix([sx + sxSide * squareHalf, 0, side * cz], [0, sxSide > 0 ? -Math.PI / 2 : Math.PI / 2, 0]);
           walls.addAll(place(house.solid, base));
@@ -1618,7 +1619,7 @@ function buildWater(): THREE.Mesh {
 
 /* ------------------------------------------------------------------ builder */
 
-export async function buildCity(onProgress: (label: string, value: number) => void): Promise<City> {
+export async function buildCity(onProgress: (label: string, value: number) => void, light = false): Promise<City> {
   const rng = makeRng(20261015);
   const root = new THREE.Group();
   const CHUNK_SIZE = LAYOUT.chunkSize;
@@ -1640,13 +1641,13 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   await nextFrame();
 
   onProgress("houses", 0.38);
-  buildHouseRow(walls, glow, rng, 1, -98, 98);
+  buildHouseRow(walls, glow, rng, 1, light ? 1 : -98, light ? -1 : 98);
   await nextFrame();
-  buildHouseRow(walls, glow, rng, -1, -98, 98);
+  buildHouseRow(walls, glow, rng, -1, light ? 1 : -98, light ? -1 : 98);
   await nextFrame();
 
   onProgress("streets", 0.46);
-  buildSideStreets(ground, walls, solid, nature, glow, colliders, rng);
+  buildSideStreets(ground, walls, solid, nature, glow, colliders, rng, light);
   await nextFrame();
 
   onProgress("skyline", 0.52);
@@ -1656,11 +1657,11 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   onProgress("props", 0.64);
   buildProps(solid, glow, nature, colliders, rng);
   buildMarket(solid, glow, nature, colliders, rng);
-  buildClutter(solid, nature, colliders, rng);
+  if (!light) buildClutter(solid, nature, colliders, rng);
   await nextFrame();
 
   onProgress("furniture", 0.69);
-  const flyers = buildFurniture(solid, nature, colliders, rng);
+  const flyers = light ? [] : buildFurniture(solid, nature, colliders, rng);
   for (const flyer of flyers) root.add(flyer.group);
   await nextFrame();
 

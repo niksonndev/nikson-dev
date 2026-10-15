@@ -36,6 +36,8 @@ export type Telemetry = {
 
 export type WorldOptions = {
   canvas: HTMLCanvasElement;
+  /** build a lighter world (fewer props and facade details) for slow machines */
+  light?: boolean;
   onProgress: (label: string, value: number) => void;
   onReady: (info: { backend: string }) => void;
   onNear: (poi: PoiId | null) => void;
@@ -517,7 +519,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
         ? "WebGPU"
         : "WebGL2";
       backendName = backend;
-      const built = await buildCity(options.onProgress);
+      const built = await buildCity(options.onProgress, options.light === true);
       if (disposed) return;
 
       colliders = built.colliders;

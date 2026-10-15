@@ -89,6 +89,8 @@ export default function ThreeRoute() {
     let raf = 0;
     let frames = 0;
     let measured = 0;
+    let warmup = 0;
+    let decided = false;
     let last = performance.now();
     const order: Quality[] = ["low", "medium", "high"];
     const tick = () => {
@@ -96,16 +98,25 @@ export default function ThreeRoute() {
       const delta = now - last;
       last = now;
       frames++;
-      if (frames < 40) {
+      // warm up on frames or on time: a slow machine takes forever to reach
+      // a frame count, and the answer is obvious much earlier than that
+      if (warmup < 1200 && frames < 24) {
+        warmup += delta;
+        raf = window.requestAnimationFrame(tick);
+        return;
+      }
+      if (frames < 24) {
         raf = window.requestAnimationFrame(tick);
         return;
       }
       measured += delta;
-      if (measured < 900) {
+      if (!decided && measured < 900 && frames < 240) {
         raf = window.requestAnimationFrame(tick);
         return;
       }
-      const fps = 1000 / (measured / (frames - 40));
+      decided = true;
+      const samples = frames - 24;
+      const fps = samples > 0 ? 1000 / (measured / samples) : 0;
       const current = order.indexOf(readQuality() ?? "high");
       const next = order[fps < 30 ? 0 : fps < 48 ? Math.min(current, 1) : current];
       if (next !== order[current]) {
@@ -140,6 +151,7 @@ export default function ThreeRoute() {
         if (cancelled) return;
         handle = createWorld({
           canvas,
+          light: readQuality() === "low",
           onProgress: (label, value) => setProgress({ label, value }),
           onReady: (info) => {
             setBackend(info.backend);
