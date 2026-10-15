@@ -27,6 +27,11 @@
       "description": "Reduziu o payload em ~93% (~112KB → ~8KB) para 3 redes de cinema — sessões ao vivo no Telegram no Render via API Ingresso.com."
     },
     "liveDemo": "Demo ao vivo",
+    "enterWorld": "Entrar no mundo",
+    "threeWorld": {
+      "title": "Amsterdã de bike (3D)",
+      "description": "Um mundo 3D jogável dentro do site: pedale por uma Amsterdã procedural feita com three.js + TSL — WebGPU quando o navegador suporta, WebGL2 como plano B. Tudo gerado por código, sem assets importados."
+    },
     "github": "GitHub",
     "analyticsIntegrated": "Analytics integrado"
   },
@@ -80,6 +85,77 @@
     "paragraph1": "Full-Stack Software Engineer que entrega ponta a ponta — do PostgreSQL ao Docker/cloud. Implementei GTM/GA4 em 900+ e-commerces (Cognizant / Google), front-end em time internacional (Pixelmatters) e produtos próprios de IA em produção.",
     "paragraph2": "Impacto em números: Imóvel Radar cataloga 17.740+ aluguéis; Maceió Cine Bot cortou payloads de sessão ~112KB → ~8KB; Job Hunter AI avalia ~1.000 vagas por ~$0,13; nikson.dev reduziu o LCP em ~2s.",
     "paragraph3": "Baseado em Maceió, Brasil (BRT). Aberto a vagas remotas e internacionais. Português (nativo), inglês (C1), espanhol (C1)."
+  },
+  "three": {
+    "back": "Voltar ao portfólio",
+    "title": "Amsterdã de bike",
+    "subtitle": "Um mundo 3D procedural que roda no seu navegador. Pedale pelos canais e descubra o que tem por aqui.",
+    "building": "Construindo a cidade",
+    "steps": {
+      "quays": "Cais e ruas",
+      "bridges": "Pontes",
+      "houses": "Casas de tijolo",
+      "skyline": "Torres e moinho",
+      "props": "Árvores, postes e bikes",
+      "boats": "Barcos",
+      "materials": "Água e céu",
+      "ready": "Pronto"
+    },
+    "pressToRide": "Clique na tela e pedale com W, A, S, D",
+    "tapToRide": "Toque na tela para pedalar",
+    "tap": "toque",
+    "close": "Fechar",
+    "errorTitle": "Não deu para carregar o mundo 3D",
+    "errorBody": "Seu navegador (ou a placa de vídeo) não conseguiu iniciar o WebGL. O resto do portfólio continua aqui.",
+    "controls": {
+      "pedal": "Pedalar",
+      "brake": "Frear",
+      "steer": "Virar",
+      "boost": "Turbo",
+      "enter": "Interagir",
+      "bell": "Campainha",
+      "reset": "Recomeçar",
+      "camera": "Girar câmera",
+      "left": "Virar à esquerda",
+      "right": "Virar à direita"
+    },
+    "pois": {
+      "projects": {
+        "label": "Oficina de bikes",
+        "title": "Projetos",
+        "body": "Quatro produtos independentes em produção: Nerdy Story (livro com correção por IA), Imóvel Radar (17.740+ anúncios), Job Hunter AI (1.000 vagas por ~$0,13) e Maceió Cine Bot.",
+        "cta": "Ver os projetos",
+        "href": "/#projects"
+      },
+      "about": {
+        "label": "Café na esquina",
+        "title": "Sobre mim",
+        "body": "Full-stack engineer em Maceió, Brasil. Entrego de ponta a ponta: scraping, automação, IA aplicada e front-end. Trabalho remoto e em inglês.",
+        "cta": "Ler mais",
+        "href": "/#about"
+      },
+      "stack": {
+        "label": "Ponte sobre o canal",
+        "title": "Stack",
+        "body": "three.js com TSL: o mesmo código compila para WGSL (WebGPU) ou GLSL (WebGL2), então o passeio funciona em qualquer navegador. Nada de assets externos, a cidade toda é gerada por código.",
+        "cta": "Ver experiência",
+        "href": "/#experience"
+      },
+      "made": {
+        "label": "Banca de tulipas",
+        "title": "Como isto foi feito",
+        "body": "Cidade procedural com semente fixa: casas, pontes, barcos e o moinho nascem de geometria montada em JavaScript. Água e céu são shaders em TSL, e a bike usa IK de duas juntas nas pernas e nos braços.",
+        "cta": "Código no GitHub",
+        "href": "https://github.com/niksonndev/nikson-dev"
+      },
+      "contact": {
+        "label": "Caixa de correio",
+        "title": "Contato",
+        "body": "Aberto a vagas remotas e internacionais, freelas e conversas sobre IA aplicada. Me chama por e-mail ou LinkedIn.",
+        "cta": "Mandar e-mail",
+        "href": "mailto:niksonndev@gmail.com"
+      }
+    }
   },
   "footer": {
     "available": "Disponível para projetos"

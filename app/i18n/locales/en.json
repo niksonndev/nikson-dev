@@ -27,6 +27,11 @@
       "description": "Cut payload ~93% (~112KB → ~8KB) for 3 theater chains — live Telegram showtimes on Render via Ingresso.com API."
     },
     "liveDemo": "Live Demo",
+    "enterWorld": "Enter the world",
+    "threeWorld": {
+      "title": "Amsterdam by bike (3D)",
+      "description": "A playable 3D world inside the site: ride a procedural Amsterdam built with three.js + TSL — WebGPU when the browser supports it, WebGL2 as fallback. Everything generated in code, no imported assets."
+    },
     "github": "GitHub",
     "analyticsIntegrated": "Analytics Integrated"
   },
@@ -80,6 +85,77 @@
     "paragraph1": "Full-Stack Software Engineer who ships end-to-end — PostgreSQL to Docker/cloud. Delivered GTM/GA4 for 900+ e-commerces (Cognizant / Google), front-end on an international product team (Pixelmatters), and independent AI products in production.",
     "paragraph2": "Impact by the numbers: Imóvel Radar catalogues 17,740+ rentals; Maceió Cine Bot cut session payloads ~112KB → ~8KB; Job Hunter AI scores ~1,000 listings for ~$0.13; nikson.dev cut LCP by ~2s.",
     "paragraph3": "Based in Maceió, Brazil (BRT). Open to remote and international roles. Portuguese (native), English (C1), Spanish (C1)."
+  },
+  "three": {
+    "back": "Back to portfolio",
+    "title": "Amsterdam by bike",
+    "subtitle": "A procedural 3D world running in your browser. Ride along the canals and find what is hidden around here.",
+    "building": "Building the city",
+    "steps": {
+      "quays": "Quays and streets",
+      "bridges": "Bridges",
+      "houses": "Brick houses",
+      "skyline": "Towers and windmill",
+      "props": "Trees, lamps and bikes",
+      "boats": "Boats",
+      "materials": "Water and sky",
+      "ready": "Ready"
+    },
+    "pressToRide": "Click the canvas and ride with W, A, S, D",
+    "tapToRide": "Tap the screen to start pedalling",
+    "tap": "tap",
+    "close": "Close",
+    "errorTitle": "The 3D world could not load",
+    "errorBody": "Your browser (or GPU) could not start WebGL. The rest of the portfolio is still here.",
+    "controls": {
+      "pedal": "Pedal",
+      "brake": "Brake",
+      "steer": "Steer",
+      "boost": "Boost",
+      "enter": "Interact",
+      "bell": "Bell",
+      "reset": "Reset",
+      "camera": "Drag camera",
+      "left": "Steer left",
+      "right": "Steer right"
+    },
+    "pois": {
+      "projects": {
+        "label": "Bike workshop",
+        "title": "Projects",
+        "body": "Four independent products in production: Nerdy Story (AI-graded storybook), Imóvel Radar (17,740+ listings), Job Hunter AI (~1,000 listings for ~$0.13) and Maceió Cine Bot.",
+        "cta": "See the projects",
+        "href": "/#projects"
+      },
+      "about": {
+        "label": "Corner café",
+        "title": "About me",
+        "body": "Full-stack engineer based in Maceió, Brazil. I ship end to end: scraping, automation, applied AI and front-end. Remote and English-friendly.",
+        "cta": "Read more",
+        "href": "/#about"
+      },
+      "stack": {
+        "label": "Canal bridge",
+        "title": "Stack",
+        "body": "three.js with TSL: the same code compiles to WGSL (WebGPU) or GLSL (WebGL2), so the ride works in every browser. No external assets, the whole city is generated in code.",
+        "cta": "See experience",
+        "href": "/#experience"
+      },
+      "made": {
+        "label": "Flower stall",
+        "title": "How this was made",
+        "body": "A procedural city with a fixed seed: houses, bridges, boats and the windmill are geometry assembled in JavaScript. Water and sky are TSL shaders, and the rider uses two-bone IK in the legs and arms.",
+        "cta": "Code on GitHub",
+        "href": "https://github.com/niksonndev/nikson-dev"
+      },
+      "contact": {
+        "label": "Postbox",
+        "title": "Contact",
+        "body": "Open to remote and international roles, freelance work and conversations about applied AI. Reach me by email or LinkedIn.",
+        "cta": "Send an email",
+        "href": "mailto:niksonndev@gmail.com"
+      }
+    }
   },
   "footer": {
     "available": "Available for projects"

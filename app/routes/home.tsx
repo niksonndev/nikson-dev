@@ -285,6 +285,15 @@ export default function Home() {
           <ul className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
             <li>
               <ProjectCard
+                title={t("projects.threeWorld.title")}
+                description={t("projects.threeWorld.description")}
+                tags={["three.js", "TSL · WebGPU", "TypeScript", "Procedural"]}
+                liveUrl="/three"
+                liveLabel={t("projects.enterWorld")}
+              />
+            </li>
+            <li>
+              <ProjectCard
                 title={t("projects.nerdyStory.title")}
                 description={t("projects.nerdyStory.description")}
                 tags={[

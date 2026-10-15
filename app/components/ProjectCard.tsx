@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { BarChart3 } from "lucide-react";
+import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 
 export type ProjectCardProps = {
@@ -7,6 +8,7 @@ export type ProjectCardProps = {
   description: string;
   tags: string[];
   liveUrl?: string;
+  liveLabel?: string;
   githubUrl?: string;
   analyticsIntegrated?: boolean;
 };
@@ -16,6 +18,7 @@ export function ProjectCard({
   description,
   tags,
   liveUrl,
+  liveLabel,
   githubUrl,
   analyticsIntegrated = false,
 }: ProjectCardProps) {
@@ -55,14 +58,22 @@ export function ProjectCard({
         ))}
       </div>
       <div className="mt-5 flex flex-wrap gap-3">
-        {liveUrl && (
+        {liveUrl && liveUrl.startsWith("/") && (
+          <Link
+            to={liveUrl}
+            className="text-sm font-medium text-zinc-300 underline decoration-zinc-600 underline-offset-2 transition hover:text-zinc-100 hover:decoration-zinc-400"
+          >
+            {liveLabel ?? t("projects.liveDemo")}
+          </Link>
+        )}
+        {liveUrl && !liveUrl.startsWith("/") && (
           <a
             href={liveUrl}
             target="_blank"
             rel="noreferrer"
             className="text-sm font-medium text-zinc-300 underline decoration-zinc-600 underline-offset-2 transition hover:text-zinc-100 hover:decoration-zinc-400"
           >
-            {t("projects.liveDemo")}
+            {liveLabel ?? t("projects.liveDemo")}
           </a>
         )}
         {githubUrl && (

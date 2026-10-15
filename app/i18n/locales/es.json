@@ -28,6 +28,11 @@
     },
     "liveDemo": "Demo en vivo",
     "github": "GitHub",
+    "enterWorld": "Entrar al mundo",
+    "threeWorld": {
+      "title": "Ámsterdam en bici (3D)",
+      "description": "Un mundo 3D jugable dentro del sitio: pedalea por un Ámsterdam procedural hecho con three.js + TSL — WebGPU cuando el navegador lo soporta, WebGL2 como respaldo. Todo generado por código, sin assets importados."
+    },
     "analyticsIntegrated": "Analytics integrado"
   },
   "experience": {
@@ -80,6 +85,77 @@
     "paragraph1": "Full-Stack Software Engineer que entrega de extremo a extremo — de PostgreSQL a Docker/cloud. Implementé GTM/GA4 en 900+ e-commerces (Cognizant / Google), front-end en un equipo internacional (Pixelmatters) y productos propios de IA en producción.",
     "paragraph2": "Impacto en números: Imóvel Radar cataloga 17.740+ alquileres; Maceió Cine Bot redujo payloads de sesión ~112KB → ~8KB; Job Hunter AI evalúa ~1.000 empleos por ~$0,13; nikson.dev redujo el LCP ~2s.",
     "paragraph3": "Basado en Maceió, Brasil (BRT). Abierto a roles remotos e internacionales. Portugués (nativo), inglés (C1), español (C1)."
+  },
+  "three": {
+    "back": "Volver al portafolio",
+    "title": "Ámsterdam en bicicleta",
+    "subtitle": "Un mundo 3D procedural que corre en tu navegador. Pedalea por los canales y descubre lo que hay por aquí.",
+    "building": "Construyendo la ciudad",
+    "steps": {
+      "quays": "Muelles y calles",
+      "bridges": "Puentes",
+      "houses": "Casas de ladrillo",
+      "skyline": "Torres y molino",
+      "props": "Árboles, faroles y bicis",
+      "boats": "Barcos",
+      "materials": "Agua y cielo",
+      "ready": "Listo"
+    },
+    "pressToRide": "Haz clic en la pantalla y pedalea con W, A, S, D",
+    "tapToRide": "Toca la pantalla para pedalear",
+    "tap": "toca",
+    "close": "Cerrar",
+    "errorTitle": "No se pudo cargar el mundo 3D",
+    "errorBody": "Tu navegador (o la tarjeta gráfica) no pudo iniciar WebGL. El resto del portafolio sigue aquí.",
+    "controls": {
+      "pedal": "Pedalear",
+      "brake": "Frenar",
+      "steer": "Girar",
+      "boost": "Turbo",
+      "enter": "Interactuar",
+      "bell": "Timbre",
+      "reset": "Reiniciar",
+      "camera": "Girar cámara",
+      "left": "Girar a la izquierda",
+      "right": "Girar a la derecha"
+    },
+    "pois": {
+      "projects": {
+        "label": "Taller de bicis",
+        "title": "Proyectos",
+        "body": "Cuatro productos independientes en producción: Nerdy Story (libro con corrección por IA), Imóvel Radar (17.740+ anuncios), Job Hunter AI (1.000 empleos por ~$0,13) y Maceió Cine Bot.",
+        "cta": "Ver los proyectos",
+        "href": "/#projects"
+      },
+      "about": {
+        "label": "Café de la esquina",
+        "title": "Sobre mí",
+        "body": "Full-stack engineer en Maceió, Brasil. Entrego de extremo a extremo: scraping, automatización, IA aplicada y front-end. Trabajo remoto y en inglés.",
+        "cta": "Leer más",
+        "href": "/#about"
+      },
+      "stack": {
+        "label": "Puente sobre el canal",
+        "title": "Stack",
+        "body": "three.js con TSL: el mismo código compila a WGSL (WebGPU) o GLSL (WebGL2), así que el paseo funciona en cualquier navegador. Sin assets externos, toda la ciudad se genera por código.",
+        "cta": "Ver experiencia",
+        "href": "/#experience"
+      },
+      "made": {
+        "label": "Puesto de tulipanes",
+        "title": "Cómo se hizo",
+        "body": "Ciudad procedural con semilla fija: casas, puentes, barcos y el molino son geometría armada en JavaScript. El agua y el cielo son shaders en TSL, y la bici usa IK de dos huesos en piernas y brazos.",
+        "cta": "Código en GitHub",
+        "href": "https://github.com/niksonndev/nikson-dev"
+      },
+      "contact": {
+        "label": "Buzón",
+        "title": "Contacto",
+        "body": "Abierto a roles remotos e internacionales, freelance y charlas sobre IA aplicada. Escríbeme por email o LinkedIn.",
+        "cta": "Enviar email",
+        "href": "mailto:niksonndev@gmail.com"
+      }
+    }
   },
   "footer": {
     "available": "Disponible para proyectos"
