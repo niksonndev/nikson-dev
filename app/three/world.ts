@@ -6,7 +6,17 @@ import { buildCity, SUN_COLOR, SUN_DIR, type Collectible } from "./city";
 import { createBike } from "./bike";
 import { createAudio } from "./audio";
 import { createInput } from "./input";
-import { LAYOUT, POI_ANCHORS, heightAt, isOnBridge, slopeAt, type Collider, type PoiId } from "./layout";
+import {
+  LAYOUT,
+  POI_ANCHORS,
+  depthLimitAt,
+  heightAt,
+  isOnBridge,
+  sideStreetHalfAt,
+  slopeAt,
+  type Collider,
+  type PoiId,
+} from "./layout";
 import { COLORS } from "./palette";
 import { makeShadowTexture } from "./utils";
 
@@ -271,10 +281,22 @@ export function createWorld(options: WorldOptions): WorldHandle {
       nextZ = Math.sign(state.z || 1) * canalLimit;
       killSpeed(0.35);
     }
-    // house facades
-    if (Math.abs(nextZ) > LAYOUT.blockEdgeZ) {
-      nextZ = Math.sign(nextZ) * LAYOUT.blockEdgeZ;
+    // house facades, except where a bridge gap or a side street cuts in
+    const limit = depthLimitAt(nextX, nextZ);
+    if (Math.abs(nextZ) > limit) {
+      nextZ = Math.sign(nextZ) * limit;
       killSpeed(0.5);
+    }
+    // walls of a side street once the rider is past the facade line
+    if (Math.abs(nextZ) > LAYOUT.blockEdgeZ) {
+      for (const sx of LAYOUT.sideStreets) {
+        const half = sideStreetHalfAt(nextZ);
+        const dx = nextX - sx;
+        if (Math.abs(dx) > half && Math.abs(state.x - sx) <= half) {
+          nextX = sx + Math.sign(dx) * half;
+          killSpeed(0.6);
+        }
+      }
     }
     // bridge railings
     if (Math.abs(nextZ) < LAYOUT.bridgeSpan) {
@@ -367,6 +389,17 @@ export function createWorld(options: WorldOptions): WorldHandle {
       .set(state.x - forward.x * back, heightAt(state.x, state.z) + height, state.z - forward.z * back)
       .add(new THREE.Vector3(0, 0, 0));
     camera.position.lerp(desired, smoothing);
+
+    // keep the chase camera out of the houses: same limits as the rider, but a
+    // touch tighter so it never clips into a wall
+    const camLimit = depthLimitAt(state.x, state.z) - 0.5;
+    if (Math.abs(camera.position.z) > camLimit) camera.position.z = Math.sign(camera.position.z) * camLimit;
+    const street = LAYOUT.sideStreets.find((sx) => Math.abs(state.x - sx) <= LAYOUT.sideStreetHalf);
+    if (street !== undefined && Math.abs(state.z) > LAYOUT.blockEdgeZ) {
+      const half = sideStreetHalfAt(state.z) - 0.3;
+      const dx = camera.position.x - street;
+      if (Math.abs(dx) > half) camera.position.x = street + Math.sign(dx) * half;
+    }
 
     lookAt.set(state.x + forward.x * 3.2, heightAt(state.x, state.z) + 1.5, state.z + forward.z * 3.2);
     camera.lookAt(lookAt);

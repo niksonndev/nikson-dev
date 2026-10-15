@@ -172,10 +172,10 @@ function buildBridges(builder: MeshBuilder, glow: MeshBuilder): void {
       rail.dispose();
     }
 
-    // stone arch seen from the canal
+    // stone arch seen from the canal: upper half tube, crown just under the deck
     const arch = new THREE.CylinderGeometry(6.65, 6.65, halfWidth * 2 + 0.2, 22, 1, true, 0, Math.PI);
-    arch.rotateZ(-Math.PI / 2);
-    builder.addGeometry(arch, COLORS.bridgeStone, matrix([bx, 1.3, 0], [0, 0, 0], [1, 0.5, 1]));
+    arch.rotateZ(Math.PI / 2);
+    builder.addGeometry(arch, COLORS.bridgeStone, matrix([bx, -1.97, 0], [0, 0, 0], [1, 0.5, 1]));
     arch.dispose();
 
     // squat abutments where the deck meets the street
@@ -347,6 +347,40 @@ function buildHouse(
       solid.push(box(shade(color, 1.07), [width + 0.08, 0.1, 0.16], [0, y + 1.45, 0.05]));
     }
 
+    // balconies with railings, a chair and a plant, on some of the storeys
+    for (let f = 0; f < floors; f++) {
+      if (width < 4.4 || !chance(rng, 0.34)) continue;
+      const y = 3.6 + f * 2.7;
+      const bw = Math.min(width - 1.1, range(rng, 1.9, 2.9));
+      const bx = range(rng, -0.3, 0.3);
+      solid.push(box(COLORS.pavement, [bw, 0.15, 0.95], [bx, y - 0.92, 0.48]));
+      solid.push(box(COLORS.trimDark, [bw, 0.055, 0.055], [bx, y - 0.24, 0.92]));
+      const bars = Math.max(4, Math.round(bw / 0.32));
+      for (let b = 0; b <= bars; b++) {
+        solid.push(box(COLORS.trimDark, [0.04, 0.66, 0.04], [bx - bw / 2 + (b * bw) / bars, y - 0.6, 0.9]));
+      }
+      for (const sz of [-1, 1]) {
+        solid.push(box(COLORS.trimDark, [0.04, 0.66, 0.86], [bx + (sz * bw) / 2, y - 0.6, 0.46]));
+      }
+      if (chance(rng, 0.5)) {
+        solid.push(box(COLORS.bench, [0.4, 0.42, 0.4], [bx + bw * 0.28, y - 0.6, 0.48]));
+      }
+      if (chance(rng, 0.45)) {
+        solid.push(
+          box(shade(pick(rng, COLORS.foliage), 1.05), [0.4, 0.42, 0.4], [bx - bw * 0.3, y - 0.6, 0.48]),
+        );
+      }
+    }
+    // the odd juliet railing in front of a window
+    if (chance(rng, 0.3) && cols >= 2) {
+      const y = 3.6 + 2.7;
+      const x = -width / 2 + margin + stepX * (0.5);
+      solid.push(box(COLORS.trimDark, [windowW + 0.3, 0.05, 0.05], [x, y - 0.28, 0.5]));
+      for (let b = 0; b <= 3; b++) {
+        solid.push(box(COLORS.trimDark, [0.035, 0.62, 0.035], [x - (windowW + 0.24) / 2 + (b * (windowW + 0.24)) / 3, y - 0.6, 0.5]));
+      }
+    }
+
     // wall anchors, drainpipe and cornice: the small stuff that sells a facade
     for (let a = 0; a < 3; a++) {
       solid.push(box(COLORS.trimDark, [0.16, 0.16, 0.07], [-width / 2 + 0.34, 4.6 + a * 2.2, 0.06]));
@@ -374,23 +408,88 @@ function buildHouse(
   }
   solid.push(...place(gableBase, matrix([0, height, 0])));
 
-  // pitched roof, chimney and the hoisting beam
+  // roof: gable, mansard, hip or a flat roof with a terrace
+  const roofType = pick(rng, ["gable", "gable", "gable", "mansard", "hip", "flat"] as const);
   const slope = Math.atan2(roofHeight, width / 2);
   const slopeLen = Math.hypot(width / 2, roofHeight) + 0.28;
-  for (const sx of [-1, 1]) {
-    solid.push(
-      box(
-        roofColor,
-        [slopeLen, 0.22, depth + 0.5],
-        [sx * (width / 4 + 0.04), height + roofHeight / 2, zc - 0.15],
-        [0, 0, -sx * slope],
-      ),
-    );
+  if (roofType === "mansard") {
+    const upperSlope = Math.atan2(roofHeight * 0.3, width * 0.36);
+    const upperLen = Math.hypot(width * 0.36, roofHeight * 0.3) + 0.2;
+    for (const sx of [-1, 1]) {
+      solid.push(
+        box(roofColor, [slopeLen, 0.22, depth + 0.5], [sx * (width / 4 + 0.04), height + roofHeight * 0.28, zc - 0.15], [0, 0, -sx * slope]),
+        box(shade(roofColor, 1.12), [upperLen, 0.2, depth + 0.4], [
+          sx * (width * 0.22 + 0.04),
+          height + roofHeight * 0.72,
+          zc - 0.2,
+        ], [0, 0, -sx * upperSlope]),
+      );
+    }
+  } else if (roofType === "hip") {
+    const hipAngle = Math.atan2(roofHeight * 0.85, width * 0.4);
+    const hipLen = Math.hypot(width * 0.4, roofHeight * 0.85) + 0.3;
+    for (const sx of [-1, 1]) {
+      solid.push(
+        box(roofColor, [slopeLen, 0.22, depth + 0.5], [sx * (width / 4 + 0.04), height + roofHeight / 2, zc - 0.15], [0, 0, -sx * slope]),
+      );
+    }
+    for (const sz of [-1, 1]) {
+      solid.push(
+        box(shade(roofColor, 0.94), [width + 0.5, 0.22, hipLen], [0, height + roofHeight * 0.42, zc + sz * (depth / 2 + 0.1)], [
+          sz * hipAngle,
+          0,
+          0,
+        ]),
+      );
+    }
+  } else if (roofType === "flat") {
+    solid.push(box(shade(roofColor, 1.05), [width + 0.2, 0.24, depth + 0.3], [0, height, zc + 0.05]));
+    for (const sx of [-1, 1]) {
+      solid.push(box(COLORS.trim, [0.22, 0.6, depth + 0.4], [sx * (width / 2 + 0.02), height + 0.42, zc + 0.1]));
+    }
+    solid.push(box(COLORS.trim, [width + 0.4, 0.6, 0.22], [0, height + 0.42, -depth - 0.05]));
+    // roof terrace: railing, plants, a chair
+    if (chance(rng, 0.7)) {
+      solid.push(
+        box(COLORS.trimDark, [width * 0.5, 0.05, 0.05], [width * 0.2, height + 1.0, -1.2]),
+        ...Array.from({ length: 4 }, (_, index) =>
+          box(COLORS.trimDark, [0.04, 0.9, 0.04], [width * 0.2 - width * 0.22 + index * (width * 0.15), height + 0.55, -1.2]),
+        ),
+      );
+      for (let p = 0; p < 3; p++) {
+        solid.push(
+          box(shade(COLORS.foliage[0], range(rng, 0.9, 1.1)), [0.5, 0.5, 0.5], [
+            range(rng, -width * 0.3, width * 0.3),
+            height + 0.5,
+            zc + range(rng, -1, 1),
+          ]),
+        );
+      }
+      solid.push(box(COLORS.bench, [0.6, 0.7, 0.6], [-width * 0.25, height + 0.5, zc + 1]));
+    }
+  } else {
+    for (const sx of [-1, 1]) {
+      solid.push(
+        box(
+          roofColor,
+          [slopeLen, 0.22, depth + 0.5],
+          [sx * (width / 4 + 0.04), height + roofHeight / 2, zc - 0.15],
+          [0, 0, -sx * slope],
+        ),
+      );
+    }
+    solid.push(box(roofColor, [0.34, 0.32, depth + 0.5], [0, height + roofHeight + 0.05, zc - 0.15]));
   }
-  solid.push(box(roofColor, [0.34, 0.32, depth + 0.5], [0, height + roofHeight + 0.05, zc - 0.15]));
   solid.push(box(shade(color, 0.8), [0.56, 1.1, 0.56], [width * 0.22, height + roofHeight * 0.72, -depth * 0.72]));
   solid.push(box(COLORS.trimDark, [0.18, 0.18, 0.95], [0, height + roofHeight - 0.35, 0.42]));
   solid.push(cyl(COLORS.trimDark, [0.05, 0.08], 0.34, [0, height + roofHeight - 0.9, 0.78], [0, 0, 0], 6));
+  // the odd tv antenna
+  if (chance(rng, 0.3)) {
+    solid.push(
+      cyl(COLORS.trimDark, [0.02, 0.03], 1.6, [width * 0.34, height + roofHeight + 0.7, -depth * 0.6], [0, 0, 0], 5),
+      box(COLORS.metalDark, [0.5, 0.05, 0.05], [width * 0.34, height + roofHeight + 1.45, -depth * 0.6]),
+    );
+  }
 
   return { solid, glow, width };
 }
@@ -410,12 +509,112 @@ function buildHouseRow(
     const house = buildHouse(rng, index++, detail);
     const centerX = x + house.width / 2;
     const inBridgeGap = LAYOUT.bridges.some((bx) => Math.abs(centerX - bx) < LAYOUT.bridgeGap);
-    if (!inBridgeGap) {
+    const inSideStreet = LAYOUT.sideStreets.some((sx) => Math.abs(centerX - sx) < LAYOUT.sideStreetHalf + 1.6);
+    if (!inBridgeGap && !inSideStreet) {
       const base = matrix([centerX, 0, side * LAYOUT.facadeZ], [0, side > 0 ? Math.PI : 0, 0]);
       solid.addAll(place(house.solid, base));
       glow.addAll(place(house.glow, base));
     }
     x = centerX + house.width / 2 + range(rng, 0.05, 0.4);
+  }
+}
+
+/* ------------------------------------------------------- side streets */
+
+/** Streets that cut into the block, each opening into a small square with a fountain. */
+function buildSideStreets(
+  ground: MeshBuilder,
+  walls: MeshBuilder,
+  solid: MeshBuilder,
+  nature: MeshBuilder,
+  glow: MeshBuilder,
+  colliders: Collider[],
+  rng: Rng,
+): void {
+  const { facadeZ, sideStreetHalf: sh, sideStreetDepth: sd, squareHalf, squareZ } = LAYOUT;
+  for (const sx of LAYOUT.sideStreets) {
+    for (const side of [1, -1] as const) {
+      // paving: the narrow street, then the widening of the square
+      ground.addAll([
+        box(COLORS.pavement, [sh * 2 + 0.8, 0.17, sd - facadeZ + 1.2], [sx, 0.1, side * (facadeZ + (sd - facadeZ) / 2)]),
+        box(COLORS.pavement, [squareHalf * 2, 0.17, sd - squareZ + 1.1], [sx, 0.1, side * (squareZ + (sd - squareZ) / 2)]),
+      ]);
+
+      // houses lining both sides of the street, facing inwards
+      let z = facadeZ + 0.3;
+      let index = 0;
+      while (z < squareZ - 2.4) {
+        const house = buildHouse(rng, 60 + index++, true);
+        const cz = z + house.width / 2;
+        for (const sxSide of [-1, 1] as const) {
+          const base = matrix([sx + sxSide * sh, 0, side * cz], [0, sxSide > 0 ? -Math.PI / 2 : Math.PI / 2, 0]);
+          walls.addAll(place(house.solid, base));
+          glow.addAll(place(house.glow, base));
+        }
+        z = cz + house.width / 2 + range(rng, 0.05, 0.3);
+      }
+
+      // the far side of the square, and its corners
+      let bx = sx - squareHalf;
+      let bi = 0;
+      while (bx < sx + squareHalf) {
+        const house = buildHouse(rng, 90 + bi++, true);
+        const cx = bx + house.width / 2;
+        const base = matrix([cx, 0, side * sd], [0, side > 0 ? Math.PI : 0, 0]);
+        walls.addAll(place(house.solid, base));
+        glow.addAll(place(house.glow, base));
+        bx = cx + house.width / 2 + 0.2;
+      }
+      for (const sxSide of [-1, 1] as const) {
+        let z2 = squareZ - 0.8;
+        let i2 = 0;
+        while (z2 < sd - 4.6) {
+          const house = buildHouse(rng, 120 + i2++, true);
+          const cz = z2 + house.width / 2;
+          const base = matrix([sx + sxSide * squareHalf, 0, side * cz], [0, sxSide > 0 ? -Math.PI / 2 : Math.PI / 2, 0]);
+          walls.addAll(place(house.solid, base));
+          glow.addAll(place(house.glow, base));
+          z2 = cz + house.width / 2 + 0.2;
+        }
+      }
+
+      // fountain in the middle of the square
+      const fz = side * (squareZ + 2.6);
+      solid.addAll([
+        cyl(COLORS.bridgeStone, [1.45, 1.65], 0.6, [sx, 0.38, fz], [0, 0, 0], 16),
+        cyl(COLORS.bridgeStone, [1.32, 1.32], 0.14, [sx, 0.72, fz], [0, 0, 0], 16),
+        cyl(COLORS.bridgeStone, [0.26, 0.4], 1.5, [sx, 1.25, fz], [0, 0, 0], 10),
+        cyl(COLORS.bridgeStone, [0.5, 0.26], 0.24, [sx, 2.05, fz], [0, 0, 0], 12),
+      ]);
+      glow.addAll([
+        cyl(COLORS.waterSurface, [1.26, 1.26], 0.07, [sx, 0.77, fz], [0, 0, 0], 16),
+        cyl("#dff0ea", [0.06, 0.06], 0.9, [sx, 1.75, fz], [0, 0, 0], 8),
+      ]);
+      colliders.push({ x: sx, z: fz, r: 1.7 });
+
+      // trees, benches, planters and a few crates around the square
+      for (let i = 0; i < 3; i++) {
+        const tz = side * (squareZ + 0.4 + i * 2.6);
+        for (const sxSide of [-1, 1] as const) {
+          const tx = sx + sxSide * (squareHalf - 1.5);
+          if (chance(rng, 0.25)) continue;
+          nature.addAll(treePieces(rng, [tx, 0, tz]));
+          colliders.push({ x: tx, z: tz, r: 0.5 });
+        }
+      }
+      for (let i = 0; i < 2; i++) {
+        const bz = side * (squareZ + 1.4 + i * 4);
+        for (const sxSide of [-1, 1] as const) {
+          solid.addAll(benchPieces([sx + sxSide * (squareHalf - 2.2), 0, bz], sxSide > 0 ? Math.PI / 2 : -Math.PI / 2));
+        }
+      }
+      for (let i = 0; i < 4; i++) {
+        const cx = sx + (i % 2 === 0 ? -1 : 1) * (sh - 1.1) + range(rng, -0.3, 0.3);
+        const cz = side * (squareZ - 2.6 - i * 1.1);
+        solid.addAll([box(shade(COLORS.boatWood, range(rng, 0.9, 1.1)), [0.7, 0.5, 0.7], [cx, 0.42, cz])]);
+        colliders.push({ x: cx, z: cz, r: 0.55 });
+      }
+    }
   }
 }
 
@@ -1443,6 +1642,10 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   buildHouseRow(walls, glow, rng, 1, -98, 98);
   await nextFrame();
   buildHouseRow(walls, glow, rng, -1, -98, 98);
+  await nextFrame();
+
+  onProgress("streets", 0.46);
+  buildSideStreets(ground, walls, solid, nature, glow, colliders, rng);
   await nextFrame();
 
   onProgress("skyline", 0.52);

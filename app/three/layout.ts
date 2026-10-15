@@ -38,7 +38,28 @@ export const LAYOUT = {
   blockEdgeZ: 15.5,
   /** width of the gap in the house rows where a bridge lands */
   bridgeGap: 6.4,
+  /** side streets that cut perpendicular into the block, each ending in a small square */
+  sideStreets: [-18, 74] as readonly number[],
+  sideStreetHalf: 4.6,
+  sideStreetDepth: 30,
+  squareHalf: 7.4,
+  squareZ: 23.5,
 } as const;
+
+/** How deep the rider may go at this spot: the quay, a side street, or its square. */
+export function depthLimitAt(x: number, z: number): number {
+  for (const sx of LAYOUT.sideStreets) {
+    const dx = Math.abs(x - sx);
+    if (dx <= LAYOUT.sideStreetHalf - 0.45) return LAYOUT.sideStreetDepth;
+    if (dx <= LAYOUT.squareHalf - 0.45 && Math.abs(z) > LAYOUT.squareZ) return LAYOUT.sideStreetDepth;
+  }
+  return LAYOUT.blockEdgeZ;
+}
+
+/** Half width of the walkable strip at this depth (narrow street, then the square). */
+export function sideStreetHalfAt(z: number): number {
+  return Math.abs(z) > LAYOUT.squareZ ? LAYOUT.squareHalf - 0.45 : LAYOUT.sideStreetHalf - 0.45;
+}
 
 export function isOnBridge(x: number): boolean {
   for (const bx of LAYOUT.bridges) {
