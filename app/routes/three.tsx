@@ -84,8 +84,11 @@ export default function ThreeRoute() {
   // pick a level for the machine that is actually running the world: the first
   // seconds after the build are full of shader compiles, so they are ignored
   useEffect(() => {
-    if (status !== "ready" || qualityChosen.current) return;
+    if (status !== "ready") return;
+    // the world is built after this component mounts, so the stored level has to
+    // be applied here, where it exists
     worldRef.current?.setQuality(readQuality() ?? "high");
+    if (qualityChosen.current) return;
     let raf = 0;
     let frames = 0;
     let measured = 0;
