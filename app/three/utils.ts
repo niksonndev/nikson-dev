@@ -174,12 +174,28 @@ export function shapePiece(
 /**
  * Accumulates pieces into a single non-indexed geometry with vertex colours.
  * Keeps the whole city at a handful of draw calls instead of thousands of meshes.
+ * With `chunkSize` the pieces are split into per-segment geometries so the
+ * frustum can drop what the camera is not looking at (towns are wide, views are not).
  */
 export class MeshBuilder {
-  private positions: number[] = [];
-  private normals: number[] = [];
-  private colors: number[] = [];
+  private readonly buckets = new Map<string, { positions: number[]; normals: number[]; colors: number[] }>();
   private readonly tint = new THREE.Color();
+  private readonly chunkSize: number;
+
+  constructor(chunkSize = 0) {
+    this.chunkSize = chunkSize;
+  }
+
+  private bucketFor(x: number, z: number): { positions: number[]; normals: number[]; colors: number[] } {
+    const key =
+      this.chunkSize > 0 ? `${Math.floor(x / this.chunkSize)}:${Math.floor(z / this.chunkSize)}` : "all";
+    let bucket = this.buckets.get(key);
+    if (!bucket) {
+      bucket = { positions: [], normals: [], colors: [] };
+      this.buckets.set(key, bucket);
+    }
+    return bucket;
+  }
 
   add(piece: Piece): void {
     this.addGeometry(piece.geometry, piece.color, piece.transform);
@@ -200,26 +216,65 @@ export class MeshBuilder {
     const normal = g.getAttribute("normal");
     this.tint.set(color as THREE.Color);
     const { r, g: gg, b } = this.tint;
+    let cx = 0;
+    let cz = 0;
     for (let i = 0; i < position.count; i++) {
-      this.positions.push(position.getX(i), position.getY(i), position.getZ(i));
-      if (normal) this.normals.push(normal.getX(i), normal.getY(i), normal.getZ(i));
-      else this.normals.push(0, 1, 0);
-      this.colors.push(r, gg, b);
+      cx += position.getX(i);
+      cz += position.getZ(i);
+    }
+    const bucket = this.bucketFor(cx / position.count, cz / position.count);
+    for (let i = 0; i < position.count; i++) {
+      bucket.positions.push(position.getX(i), position.getY(i), position.getZ(i));
+      if (normal) bucket.normals.push(normal.getX(i), normal.getY(i), normal.getZ(i));
+      else bucket.normals.push(0, 1, 0);
+      bucket.colors.push(r, gg, b);
     }
     g.dispose();
   }
 
   get vertexCount(): number {
-    return this.positions.length / 3;
+    let total = 0;
+    for (const bucket of this.buckets.values()) total += bucket.positions.length / 3;
+    return total;
+  }
+
+  private toGeometry(bucket: { positions: number[]; normals: number[]; colors: number[] }): THREE.BufferGeometry {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(bucket.positions, 3));
+    geometry.setAttribute("normal", new THREE.Float32BufferAttribute(bucket.normals, 3));
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(bucket.colors, 3));
+    geometry.computeBoundingSphere();
+    return geometry;
   }
 
   build(): THREE.BufferGeometry {
+    const count = this.vertexCount;
+    const positions = new Float32Array(count * 3);
+    const normals = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    let offset = 0;
+    for (const bucket of this.buckets.values()) {
+      positions.set(bucket.positions, offset);
+      normals.set(bucket.normals, offset);
+      colors.set(bucket.colors, offset);
+      offset += bucket.positions.length;
+    }
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(this.positions, 3));
-    geometry.setAttribute("normal", new THREE.Float32BufferAttribute(this.normals, 3));
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(this.colors, 3));
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.computeBoundingSphere();
     return geometry;
+  }
+
+  /** One geometry per chunk (sorted left to right, both canals included). */
+  buildChunks(): THREE.BufferGeometry[] {
+    const entries = [...this.buckets.entries()].sort((a, b) => {
+      const [ax, az] = a[0].split(":").map(Number);
+      const [bx, bz] = b[0].split(":").map(Number);
+      return ax - bx || az - bz;
+    });
+    return entries.map(([, bucket]) => this.toGeometry(bucket));
   }
 }
 

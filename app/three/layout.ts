@@ -36,6 +36,8 @@ export const LAYOUT = {
   bridgeRise: 1.75,
   /** the bike is stopped by the house facades at this |z| */
   blockEdgeZ: 15.5,
+  /** size of the merged world chunks, so the frustum can drop most of the city */
+  chunkSize: 20,
   /** width of the gap in the house rows where a bridge lands */
   bridgeGap: 6.4,
   /** side streets that cut perpendicular into the block, each ending in a small square */

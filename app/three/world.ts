@@ -682,22 +682,34 @@ export function createWorld(options: WorldOptions): WorldHandle {
       return audio.isMuted();
     },
     setQuality(quality: Quality) {
-      const ratio =
+      const parent = canvas.parentElement;
+      const rect = parent?.getBoundingClientRect();
+      const width = Math.max(1, rect?.width ?? window.innerWidth);
+      const height = Math.max(1, rect?.height ?? window.innerHeight);
+      // cap total pixels, not just the device ratio: a 4K or retina screen would
+      // otherwise ask for several times the fill rate of a 1080p one
+      const budget = quality === "low" ? 1.1e6 : quality === "medium" ? 1.9e6 : 3e6;
+      const wanted =
         quality === "low"
           ? 0.75
           : quality === "medium"
             ? Math.min(window.devicePixelRatio, 1.25)
-            : Math.min(window.devicePixelRatio, 2);
-      renderer.setPixelRatio(ratio);
+            : Math.min(window.devicePixelRatio, 1.5);
+      renderer.setPixelRatio(Math.max(0.5, Math.min(wanted, Math.sqrt(budget / (width * height)))));
       const shadows = quality !== "low";
       renderer.shadowMap.enabled = shadows;
       sun.castShadow = shadows;
+      const shadowSize = quality === "high" ? 2048 : 1024;
+      if (sun.shadow.mapSize.x !== shadowSize) {
+        sun.shadow.mapSize.set(shadowSize, shadowSize);
+        sun.shadow.map?.dispose();
+        sun.shadow.map = null;
+      }
       motes.points.visible = quality !== "low";
       renderPipeline.outputNode = quality === "low" ? sceneColor : sceneColor.add(bloomNode);
-      const parent = canvas.parentElement;
       if (parent) {
-        const rect = parent.getBoundingClientRect();
-        onResize(rect.width, rect.height);
+        const resized = parent.getBoundingClientRect();
+        onResize(resized.width, resized.height);
       }
     },
   };

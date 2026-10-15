@@ -1621,11 +1621,12 @@ function buildWater(): THREE.Mesh {
 export async function buildCity(onProgress: (label: string, value: number) => void): Promise<City> {
   const rng = makeRng(20261015);
   const root = new THREE.Group();
+  const CHUNK_SIZE = LAYOUT.chunkSize;
   const ground = new MeshBuilder();
-  const walls = new MeshBuilder();
-  const solid = new MeshBuilder();
-  const nature = new MeshBuilder();
-  const glow = new MeshBuilder();
+  const walls = new MeshBuilder(CHUNK_SIZE);
+  const solid = new MeshBuilder(CHUNK_SIZE);
+  const nature = new MeshBuilder(CHUNK_SIZE);
+  const glow = new MeshBuilder(CHUNK_SIZE);
   const colliders: Collider[] = [];
   const bobbers: { object: THREE.Object3D; phase: number; amp: number; tilt: number; speed: number }[] = [];
   const drifters: { object: THREE.Object3D; phase: number; speed: number; dir: number }[] = [];
@@ -1711,20 +1712,29 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   const materials = buildMaterials();
   const groundMesh = new THREE.Mesh(ground.build(), materials.ground);
   groundMesh.receiveShadow = true;
-  const wallsMesh = new THREE.Mesh(walls.build(), materials.walls);
-  wallsMesh.castShadow = true;
-  wallsMesh.receiveShadow = true;
-  const solidMesh = new THREE.Mesh(solid.build(), materials.solid);
-  solidMesh.castShadow = true;
-  solidMesh.receiveShadow = true;
-  const natureMesh = new THREE.Mesh(nature.build(), materials.nature);
-  natureMesh.castShadow = true;
-  natureMesh.receiveShadow = true;
-  const glowMesh = new THREE.Mesh(glow.build(), materials.glow);
-  for (const mesh of [groundMesh, wallsMesh, solidMesh, natureMesh, glowMesh]) mesh.frustumCulled = false;
+  // the city is merged in 20 m chunks so the frustum can drop most of it:
+  // the canal runs for 240 m, a player never sees more than a slice of it
+  const chunkedMeshes: THREE.Mesh[] = [];
+  const addChunks = (
+    builder: MeshBuilder,
+    material: THREE.Material,
+    cast: boolean,
+    receive: boolean,
+  ): void => {
+    for (const geometry of builder.buildChunks()) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = cast;
+      mesh.receiveShadow = receive;
+      chunkedMeshes.push(mesh);
+    }
+  };
+  addChunks(walls, materials.walls, true, true);
+  addChunks(solid, materials.solid, true, true);
+  addChunks(nature, materials.nature, true, true);
+  addChunks(glow, materials.glow, false, false);
   const water = buildWater();
   const sky = buildSky();
-  root.add(groundMesh, wallsMesh, solidMesh, natureMesh, glowMesh, water, sky);
+  root.add(groundMesh, ...chunkedMeshes, water, sky);
 
   const cameraPosition = new THREE.Vector3();
   const update = (t: number, dt: number) => {

@@ -7,6 +7,14 @@ import { POI_ANCHORS, LAYOUT } from "~/three/layout";
 import type { Quality, Telemetry, WorldHandle } from "~/three/world";
 
 const POI_ORDER: PoiId[] = ["projects", "about", "stack", "made", "contact"];
+const QUALITY_KEY = "ride-quality";
+const QUALITY_MANUAL_KEY = "ride-quality-manual";
+
+function readQuality(): Quality | null {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(QUALITY_KEY);
+  return stored === "low" || stored === "medium" || stored === "high" ? stored : null;
+}
 const SITE_URL = import.meta.env.VITE_SITE_URL ?? "https://www.nikson.dev";
 const TITLE = "Amsterdam by bike · Nikson Rotondaro";
 const DESCRIPTION =
@@ -40,6 +48,7 @@ export default function ThreeRoute() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [muted, setMuted] = useState(false);
   const [quality, setQuality] = useState<Quality>("high");
+  const qualityChosen = useRef(false);
   const [collected, setCollected] = useState(0);
   const [total, setTotal] = useState(0);
   const [done, setDone] = useState(false);
@@ -65,6 +74,48 @@ export default function ThreeRoute() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  useEffect(() => {
+    const stored = readQuality();
+    qualityChosen.current = window.localStorage.getItem(QUALITY_MANUAL_KEY) === "1";
+    if (stored) setQuality(stored);
+  }, []);
+
+  // pick a level for the machine that is actually running the world: the first
+  // seconds after the build are full of shader compiles, so they are ignored
+  useEffect(() => {
+    if (status !== "ready" || qualityChosen.current) return;
+    worldRef.current?.setQuality(readQuality() ?? "high");
+    let raf = 0;
+    let frames = 0;
+    let measured = 0;
+    let last = performance.now();
+    const order: Quality[] = ["low", "medium", "high"];
+    const tick = () => {
+      const now = performance.now();
+      const delta = now - last;
+      last = now;
+      frames++;
+      if (frames < 40) {
+        raf = window.requestAnimationFrame(tick);
+        return;
+      }
+      measured += delta;
+      if (measured < 900) {
+        raf = window.requestAnimationFrame(tick);
+        return;
+      }
+      const fps = 1000 / (measured / (frames - 40));
+      const current = order.indexOf(readQuality() ?? "high");
+      const next = order[fps < 30 ? 0 : fps < 48 ? Math.min(current, 1) : current];
+      if (next !== order[current]) {
+        window.localStorage.setItem(QUALITY_KEY, next);
+        setQuality(next);
+      }
+    };
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [status]);
 
   useEffect(() => {
     worldRef.current?.setQuality(quality);
@@ -236,7 +287,12 @@ export default function ThreeRoute() {
                   <button
                     key={level}
                     type="button"
-                    onClick={() => setQuality(level)}
+                    onClick={() => {
+                      qualityChosen.current = true;
+                      window.localStorage.setItem(QUALITY_MANUAL_KEY, "1");
+                      window.localStorage.setItem(QUALITY_KEY, level);
+                      setQuality(level);
+                    }}
                     className={`flex-1 rounded-md px-2 py-1 text-xs transition ${
                       quality === level
                         ? "bg-zinc-100 text-zinc-950"
