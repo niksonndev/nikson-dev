@@ -604,7 +604,8 @@ export function createWorld(options: WorldOptions): WorldHandle {
         renderPipeline.render();
       });
 
-      if (import.meta.env.DEV) {
+      // handles for the test harness; in production only behind ?ride-debug
+      if (import.meta.env.DEV || new URLSearchParams(window.location.search).has("ride-debug")) {
         (window as unknown as { __ride?: unknown }).__ride = {
           renderer,
           scene,
