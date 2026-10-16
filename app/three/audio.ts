@@ -45,6 +45,8 @@ export function createAudio(): Audio {
   let birdTimer: number | null = null;
   let muted = false;
   let tickAccumulator = 0;
+  /** Short noise burst reused for every freewheel click (no per-click allocation). */
+  let clickBuffer: AudioBuffer | null = null;
 
   const MASTER = 0.5;
 
@@ -107,6 +109,8 @@ export function createAudio(): Audio {
   }
 
   function startAmbient(): void {
+    clickBuffer = noiseBuffer(context!, 0.05);
+
     // wind: brown noise through a slowly opening filter
     const wind = noiseSource(true);
     const windFilter = context!.createBiquadFilter();
@@ -256,12 +260,12 @@ export function createAudio(): Audio {
       windGain.gain.setTargetAtTime(0.22 + pace * 0.3, now, 0.4);
 
       // freewheel clicks, one per ~40cm of travel
-      if (speed > 1.2 && !airborne && sfxBus) {
+      if (speed > 1.2 && !airborne && sfxBus && clickBuffer) {
         tickAccumulator += Math.abs(speed) * 0.02;
         if (tickAccumulator > 1) {
           tickAccumulator = 0;
           const click = context.createBufferSource();
-          click.buffer = noiseBuffer(context, 0.05);
+          click.buffer = clickBuffer;
           const filter = context.createBiquadFilter();
           filter.type = "highpass";
           filter.frequency.value = 2400;
@@ -280,6 +284,7 @@ export function createAudio(): Audio {
       if (birdTimer !== null) window.clearTimeout(birdTimer);
       musicTimer = null;
       birdTimer = null;
+      clickBuffer = null;
       void context?.close();
       context = null;
     },

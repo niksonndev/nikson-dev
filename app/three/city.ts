@@ -11,6 +11,7 @@ import {
   fract,
   max,
   mix,
+  mx_fractal_noise_float,
   normalize,
   positionLocal,
   positionWorld,
@@ -38,6 +39,7 @@ import {
   range,
   shade,
   shapePiece,
+  sphereGeo,
   torus,
   type Piece,
   type Rng,
@@ -1557,14 +1559,51 @@ function buildRowboat(): THREE.Mesh {
   );
 }
 
+/**
+ * A swan gliding on the canal, facing +X with the waterline around y = 0.
+ * Low-poly: an ellipsoid body, a tilted neck and a cone beak — enough to read
+ * as a swan at a glance from the chase camera.
+ */
+function buildSwan(): THREE.Mesh {
+  const body = 0xf6f3ec;
+  const beak = 0xe08a3c;
+  const builder = new MeshBuilder();
+  builder.addAll([
+    {
+      geometry: sphereGeo(0.5, 10),
+      color: body,
+      transform: matrix([0, 0.12, 0], [0, 0, 0], [1.55, 0.85, 0.82]),
+    },
+    box(shade(body, 0.93), [0.36, 0.22, 0.3], [-0.72, 0.34, 0], [0, 0, 0.52]),
+    cyl(body, [0.075, 0.1], 0.78, [0.52, 0.66, 0], [0, 0, -0.38], 8),
+    {
+      geometry: sphereGeo(0.14, 8),
+      color: body,
+      transform: matrix([0.72, 1.02, 0], [0, 0, 0], [1.2, 1, 1]),
+    },
+    cone(beak, 0.07, 0.22, [0.9, 1.0, 0], [0, 0, -Math.PI / 2], 6),
+    box(0x33313a, [0.05, 0.05, 0.1], [0.83, 1.02, 0]),
+  ]);
+  const mesh = new THREE.Mesh(
+    builder.build(),
+    new MeshStandardNodeMaterial({ vertexColors: true, flatShading: true, roughness: 0.86 }),
+  );
+  mesh.castShadow = true;
+  return mesh;
+}
+
 /* -------------------------------------------------------------- sky & water */
+
+/** Top and underside of the golden-hour cumulus layer. */
+const CLOUD_LIGHT = 0xfff1d8;
+const CLOUD_SHADOW = 0x9d93a6;
 
 function linear(hex: number): [number, number, number] {
   const c = new THREE.Color(hex);
   return [c.r, c.g, c.b];
 }
 
-function buildSky(): THREE.Mesh {
+function buildSky(light: boolean): THREE.Mesh {
   const geometry = new THREE.SphereGeometry(600, 32, 20);
   const material = new MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, fog: false });
   const dir = normalize(positionLocal);
@@ -1576,7 +1615,38 @@ function buildSky(): THREE.Mesh {
   const sunDir = vec3(SUN_DIR.x, SUN_DIR.y, SUN_DIR.z);
   const sd = max(dot(dir, sunDir), float(0));
   const glow = pow(sd, float(26)).mul(0.85).add(pow(sd, float(5)).mul(0.3));
-  material.colorNode = base.add(vec3(...linear(COLORS.sun)).mul(glow));
+  const sky = base.add(vec3(...linear(COLORS.sun)).mul(glow));
+
+  // Cumulus layer. fBm is sampled on a flat plane projected onto the dome: the
+  // divide by dir.y makes the clouds bunch up towards the horizon and slide
+  // overhead, and slow drift keeps the sky alive without any texture.
+  const denom = max(dir.y, float(0.16));
+  const px = dir.x.div(denom).mul(1.5).add(time.mul(0.0055));
+  const pz = dir.z.div(denom).mul(1.5).add(time.mul(0.0032));
+  const octaves = light ? 3 : 4;
+  const shape = mx_fractal_noise_float(vec3(px, pz, float(0.35)), octaves, 2.08, 0.52)
+    .mul(0.5)
+    .add(0.5);
+  const density = smoothstep(float(0.48), float(0.74), shape);
+  // fade the layer out at the horizon, where the projection stretches to infinity
+  const cover = density.mul(smoothstep(float(0.02), float(0.34), dir.y));
+
+  // a second, coarser sample nudged towards the sun: where it is thicker the
+  // cloud reads as a bright, sunlit top instead of a flat grey blob
+  const lit = mx_fractal_noise_float(
+    vec3(px.add(SUN_DIR.x * 0.55), pz.add(SUN_DIR.z * 0.55), float(0.35)),
+    3,
+    2,
+    0.5,
+  )
+    .mul(0.5)
+    .add(0.5);
+  const shade = smoothstep(float(0.32), float(0.78), lit);
+  const cloud = mix(vec3(...linear(CLOUD_SHADOW)), vec3(...linear(CLOUD_LIGHT)), shade);
+  const rimLight = vec3(...linear(COLORS.sun)).mul(sd.mul(cover).mul(0.35));
+
+  material.colorNode = mix(sky, cloud.add(rimLight), cover.mul(0.92));
+
   const mesh = new THREE.Mesh(geometry, material);
   mesh.frustumCulled = false;
   return mesh;
@@ -1637,7 +1707,15 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   const glow = new MeshBuilder(CHUNK_SIZE);
   const colliders: Collider[] = [];
   const bobbers: { object: THREE.Object3D; phase: number; amp: number; tilt: number; speed: number }[] = [];
-  const drifters: { object: THREE.Object3D; phase: number; speed: number; dir: number }[] = [];
+  const drifters: {
+    object: THREE.Object3D;
+    phase: number;
+    speed: number;
+    dir: number;
+    y: number;
+    amp: number;
+    roll: number;
+  }[] = [];
 
   onProgress("quays", 0.08);
   buildQuays(ground, rng);
@@ -1712,7 +1790,34 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
     boat.position.set(rng() * 160 - 80, LAYOUT.waterY + 0.25, (i === 0 ? 1 : -1) * 2.6);
     boat.rotation.y = dir > 0 ? 0 : Math.PI;
     root.add(boat);
-    drifters.push({ object: boat, phase: rng() * Math.PI * 2, speed: range(rng, 1.4, 2.2), dir });
+    drifters.push({
+      object: boat,
+      phase: rng() * Math.PI * 2,
+      speed: range(rng, 1.4, 2.2),
+      dir,
+      y: LAYOUT.waterY + 0.25,
+      amp: 0.05,
+      roll: 0.04,
+    });
+  }
+  await nextFrame();
+
+  // swans idling on the water — slower and steadier than the boats
+  for (let i = 0; i < 3; i++) {
+    const dir = i % 2 === 0 ? 1 : -1;
+    const swan = buildSwan();
+    swan.position.set(rng() * 200 - 100, LAYOUT.waterY + 0.22, (i - 1) * 2.1);
+    swan.rotation.y = dir > 0 ? 0 : Math.PI;
+    root.add(swan);
+    drifters.push({
+      object: swan,
+      phase: rng() * Math.PI * 2,
+      speed: range(rng, 0.35, 0.7),
+      dir,
+      y: LAYOUT.waterY + 0.22,
+      amp: 0.02,
+      roll: 0.014,
+    });
   }
   await nextFrame();
 
@@ -1741,7 +1846,7 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   addChunks(nature, materials.nature, true, true);
   addChunks(glow, materials.glow, false, false);
   const water = buildWater();
-  const sky = buildSky();
+  const sky = buildSky(light);
   root.add(groundMesh, ...chunkedMeshes, water, sky);
 
   const cameraPosition = new THREE.Vector3();
@@ -1754,8 +1859,8 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
       drifter.object.position.x += drifter.speed * drifter.dir * dt;
       if (drifter.object.position.x > LAYOUT.worldX + 25) drifter.object.position.x = -LAYOUT.worldX - 25;
       if (drifter.object.position.x < -LAYOUT.worldX - 25) drifter.object.position.x = LAYOUT.worldX + 25;
-      drifter.object.position.y = LAYOUT.waterY + 0.25 + Math.sin(t * 1.1 + drifter.phase) * 0.05;
-      drifter.object.rotation.z = Math.sin(t * 0.9 + drifter.phase) * 0.04;
+      drifter.object.position.y = drifter.y + Math.sin(t * 1.1 + drifter.phase) * drifter.amp;
+      drifter.object.rotation.z = Math.sin(t * 0.9 + drifter.phase) * drifter.roll;
     }
     sky.position.copy(cameraPosition);
     for (const flyer of flyers) {

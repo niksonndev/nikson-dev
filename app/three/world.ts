@@ -66,6 +66,8 @@ const ACCEL = 15;
 const BRAKE = 26;
 const RIDER_RADIUS = 0.45;
 const POI_RANGE = 5;
+/** Where every ride starts (and restarts after a reset). */
+const START = { x: -38, z: 10.2, yaw: 0 };
 
 const MARKER_COLORS: Record<PoiId, number> = {
   projects: 0xffc077,
@@ -75,53 +77,129 @@ const MARKER_COLORS: Record<PoiId, number> = {
   made: 0xd4739a,
 };
 
-/** Golden dust motes drifting through the sunlight, recycled around the rider. */
+/** Petal tints, borrowed from the tulip palette. */
+const PETAL_COLORS = [0xe0544f, 0xf0c94c, 0xe07fa4, 0xf2ebdd, 0xb35f96, 0xf08a3c];
+
+/**
+ * Golden dust motes drifting through the sunlight, recycled around the rider.
+ * Instanced slivers rather than `Points`: WebGPU renders point primitives at a
+ * single pixel, so an InstancedMesh is the only way to keep a real size.
+ */
 function createMotes(): {
-  points: THREE.Points;
+  mesh: THREE.InstancedMesh;
   update: (t: number, dt: number, center: THREE.Vector3) => void;
 } {
-  const count = 700;
+  const count = 600;
+  const geometry = new THREE.OctahedronGeometry(0.075, 0);
+  const material = new THREE.MeshBasicNodeMaterial({
+    color: 0xffdcae,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const mesh = new THREE.InstancedMesh(geometry, material, count);
+  mesh.frustumCulled = false;
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
   const positions = new Float32Array(count * 3);
   const phases = new Float32Array(count);
   const speeds = new Float32Array(count);
+  const scales = new Float32Array(count);
+  const dummy = new THREE.Object3D();
   for (let i = 0; i < count; i++) {
     positions[i * 3] = (Math.random() - 0.5) * 70;
     positions[i * 3 + 1] = 0.4 + Math.random() * 9;
     positions[i * 3 + 2] = (Math.random() - 0.5) * 46;
     phases[i] = Math.random() * Math.PI * 2;
     speeds[i] = 0.25 + Math.random() * 0.7;
+    scales[i] = 0.5 + Math.random() * 1.1;
   }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const material = new THREE.PointsNodeMaterial({
-    size: 0.14,
-    transparent: true,
-    opacity: 0.5,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    color: new THREE.Color(0xffdcae),
-  });
-  const points = new THREE.Points(geometry, material);
-  points.frustumCulled = false;
 
   return {
-    points,
+    mesh,
     update(t, dt, center) {
-      const attribute = geometry.getAttribute("position") as THREE.BufferAttribute;
-      const array = attribute.array as Float32Array;
       for (let i = 0; i < count; i++) {
         const ix = i * 3;
-        array[ix] += speeds[i] * dt * 1.7;
-        array[ix + 1] += Math.sin(t * 0.7 + phases[i]) * dt * 0.4;
-        array[ix + 2] += Math.cos(t * 0.5 + phases[i]) * dt * 0.3;
-        if (array[ix] > 35) array[ix] = -35;
-        if (array[ix + 1] > 12) array[ix + 1] = 0.3;
-        if (array[ix + 1] < 0.2) array[ix + 1] = 11.5;
-        if (array[ix + 2] > 23) array[ix + 2] = -23;
-        if (array[ix + 2] < -23) array[ix + 2] = 23;
+        positions[ix] += speeds[i] * dt * 1.7;
+        positions[ix + 1] += Math.sin(t * 0.7 + phases[i]) * dt * 0.4;
+        positions[ix + 2] += Math.cos(t * 0.5 + phases[i]) * dt * 0.3;
+        if (positions[ix] > 35) positions[ix] = -35;
+        if (positions[ix + 1] > 12) positions[ix + 1] = 0.3;
+        if (positions[ix + 1] < 0.2) positions[ix + 1] = 11.5;
+        if (positions[ix + 2] > 23) positions[ix + 2] = -23;
+        if (positions[ix + 2] < -23) positions[ix + 2] = 23;
+        dummy.position.set(positions[ix], positions[ix + 1], positions[ix + 2]);
+        dummy.scale.setScalar(scales[i]);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
       }
-      attribute.needsUpdate = true;
-      points.position.set(center.x, 0, center.z);
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.position.set(center.x, 0, center.z);
+    },
+  };
+}
+
+/**
+ * Tulip petals tumbling on the breeze. Same recycling trick as the motes, with
+ * each instance tinted from the tulip palette and spun so it catches the light.
+ */
+function createPetals(): {
+  mesh: THREE.InstancedMesh;
+  update: (t: number, dt: number, center: THREE.Vector3) => void;
+} {
+  const count = 240;
+  const geometry = new THREE.PlaneGeometry(0.15, 0.22);
+  const material = new THREE.MeshStandardNodeMaterial({
+    roughness: 0.9,
+    metalness: 0,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.95,
+    depthWrite: false,
+  });
+  const mesh = new THREE.InstancedMesh(geometry, material, count);
+  mesh.frustumCulled = false;
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+  const positions = new Float32Array(count * 3);
+  const phases = new Float32Array(count);
+  const speeds = new Float32Array(count);
+  const spins = new Float32Array(count);
+  const color = new THREE.Color();
+  for (let i = 0; i < count; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 64;
+    positions[i * 3 + 1] = 0.6 + Math.random() * 8;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 44;
+    phases[i] = Math.random() * Math.PI * 2;
+    speeds[i] = 0.6 + Math.random() * 1.4;
+    spins[i] = 0.6 + Math.random() * 1.6;
+    color.set(PETAL_COLORS[i % PETAL_COLORS.length]);
+    mesh.setColorAt(i, color);
+  }
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+
+  const dummy = new THREE.Object3D();
+
+  return {
+    mesh,
+    update(t, dt, center) {
+      for (let i = 0; i < count; i++) {
+        const ix = i * 3;
+        positions[ix] += speeds[i] * dt;
+        positions[ix + 1] -= (0.35 + Math.sin(t * spins[i] + phases[i]) * 0.2) * dt;
+        positions[ix + 2] += Math.sin(t * 0.8 + phases[i]) * dt * 1.1;
+        if (positions[ix] > 32) positions[ix] = -32;
+        if (positions[ix + 1] < 0.3) positions[ix + 1] = 8.5;
+        if (positions[ix + 2] > 22) positions[ix + 2] = -22;
+        if (positions[ix + 2] < -22) positions[ix + 2] = 22;
+        dummy.position.set(positions[ix], positions[ix + 1], positions[ix + 2]);
+        dummy.rotation.set(t * spins[i] + phases[i], t * 1.3 + phases[i], t * 0.7 * spins[i]);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.position.set(center.x, 0, center.z);
     },
   };
 }
@@ -143,7 +221,8 @@ export function createWorld(options: WorldOptions): WorldHandle {
   const input = createInput();
   const bike = createBike();
   const motes = createMotes();
-  scene.add(motes.points);
+  const petals = createPetals();
+  scene.add(motes.mesh, petals.mesh);
   const audio = createAudio();
   let audioReady = false;
   let colliders: Collider[] = [];
@@ -212,9 +291,9 @@ export function createWorld(options: WorldOptions): WorldHandle {
 
   // state ----------------------------------------------------------------
   const state = {
-    x: -38,
-    z: 10.2,
-    yaw: 0,
+    x: START.x,
+    z: START.z,
+    yaw: START.yaw,
     speed: 0,
     lean: 0,
     pitch: 0,
@@ -244,6 +323,16 @@ export function createWorld(options: WorldOptions): WorldHandle {
 
   function killSpeed(factor: number): void {
     state.speed *= factor;
+  }
+
+  /** Put the rider back on the starting quay, standing still. */
+  function resetRide(): void {
+    state.x = START.x;
+    state.z = START.z;
+    state.yaw = START.yaw;
+    state.speed = 0;
+    state.lean = 0;
+    state.pitch = 0;
   }
 
   function updatePhysics(dt: number): void {
@@ -388,8 +477,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
     const height = 2.9 + cameraState.pitchOffset;
 
     desired
-      .set(state.x - forward.x * back, heightAt(state.x, state.z) + height, state.z - forward.z * back)
-      .add(new THREE.Vector3(0, 0, 0));
+      .set(state.x - forward.x * back, heightAt(state.x, state.z) + height, state.z - forward.z * back);
     camera.position.lerp(desired, smoothing);
 
     // keep the chase camera out of the houses: same limits as the rider, but a
@@ -564,12 +652,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
         state.time += dt;
 
         if (input.takeReset()) {
-          state.x = -38;
-          state.z = 10.2;
-          state.yaw = 0;
-          state.speed = 0;
-          state.lean = 0;
-          state.pitch = 0;
+          resetRide();
         }
         if (input.takeBell()) audio.bell();
         if (input.takeInteract()) openNearest();
@@ -597,6 +680,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
         updateCamera(dt);
         updatePois(state.time);
         motes.update(state.time, dt, bike.root.position);
+        petals.update(state.time, dt, bike.root.position);
 
         // keep the shadow frustum centred on the rider
         sun.target.position.set(state.x, 0, state.z);
@@ -656,12 +740,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
       }
     },
     reset() {
-      state.x = -38;
-      state.z = 10.2;
-      state.yaw = 0;
-      state.speed = 0;
-      state.lean = 0;
-      state.pitch = 0;
+      resetRide();
     },
     resize(width: number, height: number) {
       onResize(width, height);
@@ -707,7 +786,8 @@ export function createWorld(options: WorldOptions): WorldHandle {
         sun.shadow.map?.dispose();
         sun.shadow.map = null;
       }
-      motes.points.visible = quality !== "low";
+      motes.mesh.visible = quality !== "low";
+      petals.mesh.visible = quality !== "low";
       renderPipeline.outputNode = quality === "low" ? sceneColor : sceneColor.add(bloomNode);
       if (parent) {
         const resized = parent.getBoundingClientRect();
