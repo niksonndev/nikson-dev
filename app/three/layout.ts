@@ -10,8 +10,9 @@
  *   |z| = 13.6 – 16   pavement with trees, lamps, parked bikes
  *   |z| = 16          house facades
  *
- * Two bridges cross the canal at x = -48 and x = +48, which is also where
- * the house rows open up into a cross street.
+ * Two bridges cross the canal at x = -48 and x = +48. A deck only spans the
+ * water and lands on the cobbles, so the house rows run unbroken right up to
+ * the bridgeheads on both quays.
  */
 
 export const LAYOUT = {
@@ -30,16 +31,16 @@ export const LAYOUT = {
   bridges: [-48, 48] as readonly number[],
   /** half width of a bridge deck along X */
   bridgeHalfWidth: 2.4,
-  /** how far a bridge deck reaches along Z: it lands on the street, not on the houses */
-  bridgeSpan: 13.6,
+  /** how far a bridge deck reaches along Z: over the water and onto the cobbles */
+  bridgeSpan: 8.8,
   /** how high the arch rises in the middle */
   bridgeRise: 1.75,
   /** the bike is stopped by the house facades at this |z| */
   blockEdgeZ: 15.5,
   /** size of the merged world chunks, so the frustum can drop most of the city */
   chunkSize: 20,
-  /** width of the gap in the house rows where a bridge lands */
-  bridgeGap: 6.4,
+  /** how far either side of a bridge the street props stand back */
+  bridgeClearance: 3,
   /** side streets that cut perpendicular into the block, each ending in a small square */
   sideStreets: [-18, 74] as readonly number[],
   sideStreetHalf: 4.6,

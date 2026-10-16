@@ -125,72 +125,72 @@ function buildQuays(builder: MeshBuilder, rng: Rng): void {
 function buildBridges(builder: MeshBuilder, glow: MeshBuilder): void {
   const span = LAYOUT.bridgeSpan;
   const halfWidth = LAYOUT.bridgeHalfWidth;
-  const steps = 28;
+  const steps = 32;
 
   for (const bx of LAYOUT.bridges) {
-    // One extruded arch per bridge: the deck follows heightAt exactly, so the
-    // ride and the geometry agree and there are no stair steps.
+    // The deck follows heightAt exactly, so the ride and the geometry agree and
+    // there are no stair steps. Every band that rides the arch is sliced out of
+    // the same profile.
     const profile: [number, number][] = [];
     for (let i = 0; i <= steps; i++) {
       const z = -span + (2 * span * i) / steps;
       profile.push([z, heightAt(bx, z)]);
     }
 
-    const deckShape = new THREE.Shape();
-    deckShape.moveTo(profile[0][0], profile[0][1] - 0.6);
-    for (const [z, y] of profile) deckShape.lineTo(z, y - 0.6);
-    for (let i = profile.length - 1; i >= 0; i--) deckShape.lineTo(profile[i][0], profile[i][1]);
-    deckShape.closePath();
-    const deck = new THREE.ExtrudeGeometry(deckShape, { depth: halfWidth * 2, bevelEnabled: false });
-    builder.addGeometry(deck, COLORS.bridgeStone, matrix([bx - halfWidth, 0, 0], [0, Math.PI / 2, 0]));
-    deck.dispose();
+    /** Extrude a band spanning `low`..`high` above the arch, `depth` wide in X. */
+    const band = (low: number, high: number, depth: number, centerX: number, color: THREE.ColorRepresentation) => {
+      const shape = new THREE.Shape();
+      shape.moveTo(profile[0][0], profile[0][1] + low);
+      for (const [z, y] of profile) shape.lineTo(z, y + low);
+      for (let i = profile.length - 1; i >= 0; i--) shape.lineTo(profile[i][0], profile[i][1] + high);
+      shape.closePath();
+      const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
+      builder.addGeometry(geometry, color, matrix([centerX - depth / 2, 0, 0], [0, Math.PI / 2, 0]));
+      geometry.dispose();
+    };
 
-    // stone parapet + metal handrail on both sides
+    // the stone body of the deck, then the worn cobbles of the riding surface
+    band(-0.66, -0.1, halfWidth * 2, bx, COLORS.bridgeStone);
+    band(-0.1, 0, halfWidth * 2 - 0.5, bx, COLORS.cobbleAlt);
+
     for (const sx of [-1, 1]) {
-      const wallShape = new THREE.Shape();
-      wallShape.moveTo(profile[0][0], profile[0][1] - 0.12);
-      for (const [z, y] of profile) wallShape.lineTo(z, y - 0.12);
-      for (let i = profile.length - 1; i >= 0; i--) wallShape.lineTo(profile[i][0], profile[i][1] + 0.95);
-      wallShape.closePath();
-      const wall = new THREE.ExtrudeGeometry(wallShape, { depth: 0.3, bevelEnabled: false });
-      builder.addGeometry(
-        wall,
-        shade(COLORS.bridgeStone, 0.95),
-        matrix([bx + sx * (halfWidth - 0.15) - 0.15, 0, 0], [0, Math.PI / 2, 0]),
-      );
-      wall.dispose();
-
-      const railShape = new THREE.Shape();
-      railShape.moveTo(profile[0][0], profile[0][1] + 0.95);
-      for (const [z, y] of profile) railShape.lineTo(z, y + 0.95);
-      for (let i = profile.length - 1; i >= 0; i--) railShape.lineTo(profile[i][0], profile[i][1] + 1.12);
-      railShape.closePath();
-      const rail = new THREE.ExtrudeGeometry(railShape, { depth: 0.14, bevelEnabled: false });
-      builder.addGeometry(
-        rail,
-        COLORS.metalDark,
-        matrix([bx + sx * (halfWidth - 0.15) - 0.07, 0, 0], [0, Math.PI / 2, 0]),
-      );
-      rail.dispose();
+      const railX = bx + sx * (halfWidth - 0.16);
+      band(-0.12, 0.72, 0.32, railX, shade(COLORS.bridgeStone, 0.94)); // parapet
+      band(0.72, 0.88, 0.44, railX, shade(COLORS.bridgeStone, 1.2)); // light stone coping
+      band(1.2, 1.3, 0.12, railX, COLORS.metalDark); // handrail
+      for (let i = 0; i <= 26; i++) {
+        const z = -span + (2 * span * i) / 26;
+        builder.add(box(COLORS.metalDark, [0.06, 0.38, 0.06], [railX, heightAt(bx, z) + 1.01, z]));
+      }
     }
 
-    // stone arch seen from the canal: upper half tube, crown just under the deck
+    // stone piers where the arch springs out of the quay walls
+    for (const sz of [-1, 1]) {
+      const z = sz * (LAYOUT.canalHalf - 0.1);
+      builder.addAll([
+        box(COLORS.bridgeStone, [halfWidth * 2 + 0.7, 3.9, 0.95], [bx, -1.53, z]),
+        box(shade(COLORS.bridgeStone, 1.14), [halfWidth * 2 + 0.9, 0.14, 1.1], [bx, 0.49, z]),
+      ]);
+    }
+
+    // the stone arch seen from the canal: upper half tube, crown just under the deck
     const arch = new THREE.CylinderGeometry(6.65, 6.65, halfWidth * 2 + 0.2, 22, 1, true, 0, Math.PI);
     arch.rotateZ(Math.PI / 2);
     builder.addGeometry(arch, COLORS.bridgeStone, matrix([bx, -1.97, 0], [0, 0, 0], [1, 0.5, 1]));
     arch.dispose();
 
-    // squat abutments where the deck meets the street
     for (const sz of [-1, 1]) {
+      // squat end posts where the parapet meets the cobbles
       for (const sx of [-1, 1]) {
-        builder.add(
-          box(COLORS.bridgeStone, [0.5, 1.5, 0.9], [
-            bx + sx * (halfWidth - 0.25),
-            LAYOUT.groundY + 0.75,
-            sz * (span - 0.45),
-          ]),
-        );
+        const postX = bx + sx * (halfWidth - 0.2);
+        const postZ = sz * (span - 0.4);
+        builder.addAll([
+          box(COLORS.bridgeStone, [0.62, 1.1, 0.82], [postX, LAYOUT.groundY + 0.45, postZ]),
+          box(shade(COLORS.bridgeStone, 1.16), [0.74, 0.16, 0.94], [postX, LAYOUT.groundY + 1.08, postZ]),
+        ]);
       }
+
+      // a lamp on each bridgehead, the classic amsterdam pair
       const z = sz * (span - 2.4);
       const y = heightAt(bx, z);
       const lampX = bx - sz * (halfWidth - 0.45);
@@ -517,9 +517,8 @@ function buildHouseRow(
     const detail = rich ? x > detailFrom && x < detailTo : true;
     const house = buildHouse(rng, index++, detail, rich);
     const centerX = x + house.width / 2;
-    const inBridgeGap = LAYOUT.bridges.some((bx) => Math.abs(centerX - bx) < LAYOUT.bridgeGap);
     const inSideStreet = LAYOUT.sideStreets.some((sx) => Math.abs(centerX - sx) < LAYOUT.sideStreetHalf + 1.6);
-    if (!inBridgeGap && !inSideStreet) {
+    if (!inSideStreet) {
       const base = matrix([centerX, 0, side * LAYOUT.facadeZ], [0, side > 0 ? Math.PI : 0, 0]);
       solid.addAll(place(house.solid, base));
       glow.addAll(place(house.glow, base));
@@ -779,7 +778,7 @@ function buildProps(
   rng: Rng,
 ): void {
   const g = LAYOUT.groundY;
-  const nearBridge = (x: number, pad: number = LAYOUT.bridgeGap + 1) =>
+  const nearBridge = (x: number, pad: number = LAYOUT.bridgeClearance + 1) =>
     LAYOUT.bridges.some((bx) => Math.abs(x - bx) < pad);
 
   for (const side of [1, -1] as const) {
@@ -992,7 +991,7 @@ function flowerPieces(rng: Rng, at: Vec3, count = 5): Piece[] {
 /** Grass along the quays, hedges, flower beds and greenery around the trees. */
 function buildNature(nature: MeshBuilder, colliders: Collider[], rng: Rng): void {
   const g = LAYOUT.groundY;
-  const nearBridge = (x: number, pad: number = LAYOUT.bridgeGap) =>
+  const nearBridge = (x: number, pad: number = LAYOUT.bridgeClearance) =>
     LAYOUT.bridges.some((bx) => Math.abs(x - bx) < pad);
 
   for (const side of [1, -1] as const) {
@@ -1117,7 +1116,7 @@ function buildClutter(
   for (const side of [1, -1] as const) {
     for (let i = 0; i < 30; i++) {
       const x = range(rng, -LAYOUT.worldX + 8, LAYOUT.worldX - 8);
-      if (LAYOUT.bridges.some((bx) => Math.abs(x - bx) < LAYOUT.bridgeGap + 2)) continue;
+      if (LAYOUT.bridges.some((bx) => Math.abs(x - bx) < LAYOUT.bridgeClearance + 2)) continue;
       const z = side * (LAYOUT.facadeZ - range(rng, 0.5, 1.7));
       const kind = Math.floor(range(rng, 0, 4));
       if (kind === 0) {
@@ -1177,7 +1176,7 @@ function buildFurniture(
 ): Flyer[] {
   const g = LAYOUT.groundY;
   const flyers: Flyer[] = [];
-  const rackSide = (x: number) => LAYOUT.bridges.some((bx) => Math.abs(x - bx) < LAYOUT.bridgeGap + 1);
+  const rackSide = (x: number) => LAYOUT.bridges.some((bx) => Math.abs(x - bx) < LAYOUT.bridgeClearance + 1);
 
   for (const side of [1, -1] as const) {
     // fietsenrek: metal hoops with bikes leaning on them
