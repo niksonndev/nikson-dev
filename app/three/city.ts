@@ -54,10 +54,15 @@ export type City = {
   root: THREE.Group;
   colliders: Collider[];
   collectibles: Collectible[];
+  /** soft spheres (tree crowns) the chase camera must not sit inside */
+  blockers: Blocker[];
   update(t: number, dt: number): void;
   /** keeps the sky dome centred on the camera */
   setCamera(position: THREE.Vector3): void;
 };
+
+/** A crown of leaves: the camera avoids it instead of punching through it. */
+export type Blocker = { x: number; y: number; z: number; r: number };
 
 /** A tulip bundle you can pick up by riding over it. */
 export type Collectible = {
@@ -537,6 +542,7 @@ function buildSideStreets(
   nature: MeshBuilder,
   glow: MeshBuilder,
   colliders: Collider[],
+  blockers: Blocker[],
   rng: Rng,
   light = false,
 ): void {
@@ -609,6 +615,7 @@ function buildSideStreets(
           if (chance(rng, 0.25)) continue;
           nature.addAll(treePieces(rng, [tx, 0, tz]));
           colliders.push({ x: tx, z: tz, r: 0.5 });
+          blockers.push({ x: tx, y: 3.5, z: tz, r: 1.5 });
         }
       }
       for (let i = 0; i < 2; i++) {
@@ -775,6 +782,7 @@ function buildProps(
   glow: MeshBuilder,
   nature: MeshBuilder,
   colliders: Collider[],
+  blockers: Blocker[],
   rng: Rng,
 ): void {
   const g = LAYOUT.groundY;
@@ -788,6 +796,7 @@ function buildProps(
       const z = side * (LAYOUT.facadeZ - 1.5);
       nature.addAll(treePieces(rng, [x, g, z]));
       colliders.push({ x, z, r: 0.55 });
+      blockers.push({ x, y: g + 3.45, z, r: 1.5 });
       if (chance(rng, 0.3)) {
         const bx = x + 3.4;
         const bz = z - side * 0.5;
@@ -858,19 +867,29 @@ function buildProps(
           cyl(COLORS.trim, [0.05, 0.05], 2.5, [ax, g + 1.25, tz], [0, 0, 0], 6),
           cone(0x9c3a34, 1.7, 0.6, [ax, g + 2.6, tz], [0, 0, 0], 8),
         ]);
+        // the parasol is big enough to swallow the chase camera
+        blockers.push({ x: ax, y: g + 2.5, z: tz, r: 1.8 });
       }
     }
   }
 
-  // bike shop around the "projects" anchor
+  // bike shop around the "projects" anchor: a shopfront on the real facade,
+  // with a canopy reaching over the pavement
   {
     const { x: px, z: pz } = POI_ANCHORS.projects;
     const street = Math.sign(pz);
+    const face = street * (LAYOUT.facadeZ - 0.26);
     solid.addAll([
-      box(pick(rng, COLORS.brick), [4.8, 4.6, 0.35], [px, g + 2.3, pz + street * 0.95]),
-      box(0x2f5d57, [5.6, 0.18, 1.9], [px, g + 3.5, pz + street * 2.0], [street * 0.22, 0, 0]),
-      box(COLORS.boatTrim, [4.4, 1.0, 0.12], [px, g + 2.7, pz + street * 1.18]),
-      box(COLORS.metalDark, [4.8, 0.14, 0.14], [px, g + 3.3, pz + street * 3.0]),
+      box(pick(rng, COLORS.brick), [4.8, 4.6, 0.35], [px, g + 2.3, face]),
+      box(0x2f5d57, [5.6, 0.18, 1.9], [px, g + 3.5, face - street * 0.95], [street * 0.22, 0, 0]),
+      box(COLORS.boatTrim, [4.4, 1.0, 0.12], [px, g + 2.7, face - street * 0.24]),
+      box(COLORS.metalDark, [4.8, 0.14, 0.14], [px, g + 3.24, face - street * 1.55]),
+      // the shop window and its door, so the front does not read as a blank slab
+      box(0x24333c, [3.0, 1.75, 0.08], [px - 0.55, g + 1.55, face - street * 0.19]),
+      box(COLORS.trim, [0.08, 1.75, 0.1], [px - 1.35, g + 1.55, face - street * 0.2]),
+      box(COLORS.trim, [0.08, 1.75, 0.1], [px - 0.05, g + 1.55, face - street * 0.2]),
+      box(0x2c5a4e, [0.96, 2.0, 0.08], [px + 1.85, g + 1.0, face - street * 0.19]),
+      box(0xe6c46a, [0.12, 0.12, 0.12], [px + 1.5, g + 1.05, face - street * 0.24]),
     ]);
     colliders.push({ x: px, z: pz, r: 1.5 });
     for (let i = 0; i < 5; i++) {
@@ -1323,8 +1342,13 @@ function buildCollectibles(root: THREE.Group, rng: Rng): Collectible[] {
     );
     mesh.castShadow = true;
     const glow = new THREE.Mesh(
-      new THREE.TorusGeometry(0.55, 0.05, 5, 20),
-      new MeshBasicNodeMaterial({ color: shade(petal, 1.25) }),
+      new THREE.TorusGeometry(0.5, 0.045, 5, 20),
+      new MeshBasicNodeMaterial({
+        color: shade(petal, 1.2),
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+      }),
     );
     glow.rotation.x = -Math.PI / 2;
     glow.position.y = 0.06;
@@ -1454,7 +1478,26 @@ export function buildMaterials(): {
     const edge = smoothstep(float(0.31), float(0.5), max(abs(local.x), abs(local.y)));
     const patch = sin(p.x.mul(0.07)).mul(cos(p.z.mul(0.09))).mul(0.5).add(0.5);
     const tone = hash.mul(0.3).add(0.85).mul(patch.mul(0.18).add(0.91));
-    ground.colorNode = vec3(tone).mul(float(1).sub(edge.mul(0.36)));
+
+    // the fietspad: a strip of smooth asphalt along the canal, with dashed
+    // white edge lines. It is the single detail that says "Amsterdam" fastest.
+    const az = abs(p.z);
+    const lane = smoothstep(float(8.05), float(8.3), az).mul(
+      float(1).sub(smoothstep(float(10.32), float(10.58), az)),
+    );
+    const outerLine = smoothstep(float(10.34), float(10.42), az).mul(
+      float(1).sub(smoothstep(float(10.47), float(10.56), az)),
+    );
+    const innerLine = smoothstep(float(8.06), float(8.14), az).mul(
+      float(1).sub(smoothstep(float(8.19), float(8.28), az)),
+    );
+    const dash = smoothstep(float(0.36), float(0.44), fract(p.x.mul(0.32)));
+    const lines = outerLine.add(innerLine).mul(dash);
+
+    const surface = mix(tone, tone.mul(vec3(0.34, 0.33, 0.4)), lane);
+    ground.colorNode = vec3(surface)
+      .mul(float(1).sub(edge.mul(0.36).mul(float(1).sub(lane.mul(0.75)))))
+      .add(vec3(lines.mul(1.35)));
   }
 
   // brick courses with mortar joints, on every wall
@@ -1509,36 +1552,96 @@ export function buildMaterials(): {
 
 /* ------------------------------------------------------------ boats & life */
 
+/**
+ * A woonboot moored along the canal. Built around the waterline (y = 0): a
+ * barge hull, a proper little house with windows, a roof terrace with a
+ * railing, plants and a bike, and a chimney. It has to read as a home from
+ * thirty metres away, because that is the only distance the rider sees it.
+ */
 function buildHouseboat(rng: Rng): THREE.Mesh {
   const pieces: Piece[] = [];
   const hull = pick(rng, COLORS.boatHull);
-  const length = range(rng, 7, 10);
+  const wall = pick(rng, [0x8a6a52, 0x9c7a5c, 0x6f7f6a, 0xb3a08a, 0x7a6a72, 0x8f8272]);
+  const length = range(rng, 8.6, 11);
+  const half = length / 2;
+  const trim = COLORS.boatTrim;
+
   pieces.push(
-    box(hull, [length, 1.3, 3.1], [0, 0, 0]),
-    box(shade(hull, 1.25), [length - 1.2, 1.9, 2.5], [0, 1.4, 0]),
-    box(shade(COLORS.boatTrim, 0.9), [length - 0.8, 0.16, 2.8], [0, 2.45, 0]),
-    cyl(shade(hull, 0.8), [0.22, 0.26], 1.4, [length * 0.3, 3.0, 0.6], [0, 0, 0], 8),
-    box(COLORS.foliage[0], [1.4, 0.4, 0.5], [-length * 0.3, 2.7, 0.9]),
-    box(COLORS.boatTrim, [length - 1.6, 0.1, 0.1], [0, 0.75, 1.5]),
+    // hull, waterline stripe and a wooden deck edge
+    box(hull, [length, 1.0, 3.0], [0, 0.05, 0]),
+    box(shade(hull, 0.62), [length + 0.04, 0.16, 3.04], [0, -0.3, 0]),
+    box(shade(hull, 0.82), [length - 0.2, 0.1, 2.86], [0, 0.58, 0]),
+    box(COLORS.boatWood, [length - 0.7, 0.1, 2.66], [0, 0.63, 0]),
+    // the house: long walls, then the gable ends
+    box(shade(wall, 0.94), [length - 2.8, 1.95, 2.5], [-0.3, 1.62, 0]),
+    box(shade(wall, 1.04), [length - 3.0, 0.12, 2.56], [-0.3, 2.63, 0]),
+    box(COLORS.trimDark, [length - 2.5, 0.18, 2.66], [-0.3, 2.72, 0]), // roof edge
+    box(shade(hull, 0.75), [length - 2.2, 0.16, 2.3], [-0.3, 2.8, 0]),
   );
-  for (let w = 0; w < 3; w++) {
+
+  // windows along both long sides, some lit
+  const bays = Math.max(2, Math.floor((length - 4) / 1.5));
+  for (let i = 0; i < bays; i++) {
+    const wx = -0.3 - (bays - 1) * 0.75 + i * 1.5;
+    for (const side of [-1, 1] as const) {
+      const lit = chance(rng, 0.55);
+      pieces.push(
+        box(lit ? COLORS.windowLit : COLORS.windowDark, [0.92, 0.78, 0.07], [wx, 1.86, side * 1.26]),
+        box(trim, [1.04, 0.09, 0.1], [wx, 2.27, side * 1.27]),
+        box(trim, [1.04, 0.09, 0.1], [wx, 1.45, side * 1.27]),
+      );
+    }
+  }
+
+  // front door on the stern wall, with a little canopy and a lamp
+  pieces.push(
+    box(0x2c5a4e, [0.94, 1.62, 0.08], [half - 1.6, 1.45, 0.0]),
+    box(trim, [1.1, 0.1, 0.12], [half - 1.6, 2.32, 0.0]),
+    box(0x9c3a34, [0.9, 0.16, 0.5], [half - 1.6, 2.5, 0.0]),
+    box(0x2a3d5c, [0.34, 0.42, 0.07], [0.9, 1.95, 1.26]),
+    box(COLORS.windowLit, [0.28, 0.34, 0.08], [0.9, 1.95, 1.27]),
+  );
+
+  // roof terrace: railing, planters, a bike and a chimney
+  const roofY = 2.88;
+  for (const side of [-1, 1] as const) {
     pieces.push(
-      box(chance(rng, 0.7) ? COLORS.windowLit : COLORS.windowDark, [1.0, 0.75, 0.12], [
-        -length * 0.3 + w * 2.0,
-        1.7,
-        1.28,
-      ]),
+      box(COLORS.metalDark, [length - 2.6, 0.06, 0.06], [-0.3, roofY + 0.5, side * 1.06]),
+      box(COLORS.metalDark, [length - 2.6, 0.06, 0.06], [-0.3, roofY + 0.94, side * 1.06]),
     );
+    for (let i = 0; i <= 6; i++) {
+      const px = -0.3 - (length - 2.6) / 2 + (i * (length - 2.6)) / 6;
+      pieces.push(box(COLORS.metalDark, [0.05, 1.0, 0.05], [px, roofY + 0.5, side * 1.06]));
+    }
   }
   pieces.push(
-    ...place(parkedBikePieces(rng), matrix([length * 0.28, 2.53, -0.4], [0, 0.4, 0], [0.85, 0.85, 0.85])),
+    cyl(shade(wall, 0.8), [0.2, 0.24], 1.1, [-half + 2.5, roofY + 0.55, -0.5], [0, 0, 0], 8),
+    cyl(COLORS.trimDark, [0.28, 0.28], 0.1, [-half + 2.5, roofY + 1.12, -0.5], [0, 0, 0], 8),
+    box(COLORS.boatWood, [1.2, 0.3, 0.6], [half - 2.2, roofY + 0.15, 0.55]),
+    ...flowerPieces(rng, [half - 2.2, roofY + 0.3, 0.55], 4),
+    ...place(parkedBikePieces(rng), matrix([0.9, roofY, -0.4], [0, 0.2, 0], [0.8, 0.8, 0.8])),
+    // life ring on the cabin side
+    {
+      geometry: new THREE.TorusGeometry(0.3, 0.075, 6, 14),
+      color: 0xe0544f,
+      transform: matrix([half - 3.3, 1.75, 1.3], [0, Math.PI / 2, 0]),
+    },
+    // stern deck: planter, crate and a folding chair
+    box(COLORS.boatWood, [1.4, 0.42, 0.6], [-half + 1.0, 0.9, 0.9]),
+    ...flowerPieces(rng, [-half + 1.0, 1.1, 0.9], 3),
+    box(shade(COLORS.boatWood, 0.9), [0.5, 0.5, 0.5], [-half + 2.2, 0.95, -0.8]),
+    box(0x3f5a63, [0.5, 0.06, 0.5], [-half + 1.0, 1.15, -1.0], [0, 0.3, 0]),
+    box(0x3f5a63, [0.6, 0.55, 0.06], [-half + 1.0, 1.4, -1.2], [0, 0.3, 0]),
   );
+
   const builder = new MeshBuilder();
   builder.addAll(pieces);
-  return new THREE.Mesh(
+  const mesh = new THREE.Mesh(
     builder.build(),
-    new MeshStandardNodeMaterial({ vertexColors: true, flatShading: true, roughness: 0.9 }),
+    new MeshStandardNodeMaterial({ vertexColors: true, flatShading: true, roughness: 0.88 }),
   );
+  mesh.castShadow = true;
+  return mesh;
 }
 
 function buildRowboat(): THREE.Mesh {
@@ -1591,6 +1694,143 @@ function buildSwan(): THREE.Mesh {
   return mesh;
 }
 
+/* ------------------------------------------------------------ boats & life */
+
+/**
+ * The canal tour boat: a long cream hull, an open deck under a flat canopy,
+ * wooden benches full of people and a Dutch flag at the bow. It is the one big
+ * moving thing on the water, so it does most of the work of making the city
+ * feel inhabited. Faces +X, waterline at y = 0.
+ */
+function buildTourBoat(rng: Rng): THREE.Group {
+  const body = new MeshBuilder();
+  const glow = new MeshBuilder();
+  const hull = 0xf0e8d8;
+  const stripe = 0x2c5b57;
+  const wood = 0xa1754b;
+  const cream = 0xf6efdf;
+  const clothes = [0xd4584a, 0x2f6b62, 0xe0bc86, 0x3f5a63, 0xc09a3e, 0x8a4c38, 0x9aa7b0, 0xb35f96];
+
+  const bow = new THREE.ConeGeometry(1.22, 2.2, 7);
+  body.addAll([
+    box(hull, [9.6, 0.8, 2.35], [0, 0.1, 0]),
+    box(stripe, [9.62, 0.14, 2.37], [0, -0.2, 0]),
+    box(shade(hull, 0.94), [9.4, 0.1, 2.15], [0, 0.51, 0]),
+    box(wood, [9.0, 0.07, 2.0], [0, 0.56, 0]),
+    box(cream, [9.3, 0.12, 0.13], [0, 0.66, 1.12]),
+    box(cream, [9.3, 0.12, 0.13], [0, 0.66, -1.12]),
+  ]);
+  body.addGeometry(bow, hull, matrix([5.0, 0.08, 0], [0, 0, -Math.PI / 2], [0.36, 1, 1]));
+  bow.dispose();
+
+  // canopy on four posts, with a teal fascia so the roof reads from far away
+  for (const px of [-3.4, 3.2]) {
+    for (const pz of [-1.02, 1.02]) {
+      body.add(cyl(0xe4dccb, [0.055, 0.055], 1.55, [px, 1.4, pz], [0, 0, 0], 6));
+    }
+  }
+  body.addAll([
+    box(cream, [7.4, 0.12, 2.45], [0, 2.2, 0]),
+    box(shade(cream, 0.9), [7.5, 0.06, 2.52], [0, 2.12, 0]),
+    box(stripe, [7.45, 0.1, 0.06], [0, 2.16, 1.24]),
+    box(stripe, [7.45, 0.1, 0.06], [0, 2.16, -1.24]),
+    box(stripe, [0.06, 0.1, 2.5], [3.72, 2.16, 0]),
+    box(stripe, [0.06, 0.1, 2.5], [-3.72, 2.16, 0]),
+  ]);
+
+  // benches, people, and a skipper at the wheel
+  const benches = [-2.55, -0.9, 0.75, 2.4];
+  benches.forEach((bx, index) => {
+    body.addAll([
+      box(wood, [0.44, 0.1, 1.82], [bx, 0.86, 0]),
+      box(shade(wood, 0.86), [0.08, 0.4, 1.82], [bx - 0.23, 1.06, 0]),
+      box(COLORS.metalDark, [0.06, 0.28, 0.06], [bx, 0.72, 0.8]),
+      box(COLORS.metalDark, [0.06, 0.28, 0.06], [bx, 0.72, -0.8]),
+    ]);
+    for (const pz of [-0.52, 0.52]) {
+      if (index === 0 && pz > 0) continue;
+      const tone = clothes[Math.floor(range(rng, 0, clothes.length))];
+      const pants = pick(rng, [0x2f3640, 0x3a4152, 0x4a4238, 0x24313a]);
+      const skin = pick(rng, [0xe0a97c, 0xc98c62, 0x8d5f43, 0xf0c39c]);
+      const hair = pick(rng, [0x33261d, 0x5b3a24, 0x1f1b18, 0xb98a4a, 0x8a8a8a]);
+      body.addAll([
+        box(pants, [0.34, 0.16, 0.3], [bx + 0.14, 0.96, pz]),
+        box(pants, [0.16, 0.34, 0.28], [bx + 0.3, 0.76, pz]),
+        box(tone, [0.27, 0.46, 0.36], [bx, 1.2, pz]),
+        box(shade(tone, 1.08), [0.3, 0.1, 0.42], [bx, 1.4, pz]),
+        {
+          geometry: sphereGeo(0.135, 8),
+          color: skin,
+          transform: matrix([bx + 0.02, 1.52, pz]),
+        },
+        box(hair, [0.16, 0.07, 0.28], [bx - 0.03, 1.6, pz]),
+      ]);
+    }
+  });
+
+  // wheelhouse: console and a skipper standing at the tiller
+  body.addAll([
+    box(0x6b5540, [0.5, 0.72, 0.9], [-4.28, 0.95, 0]),
+    box(0x9aa7b0, [0.5, 0.06, 0.92], [-4.28, 1.33, 0]),
+    box(0x2f3640, [0.34, 0.42, 0.34], [-4.3, 1.55, 0]),
+    box(0xd4584a, [0.32, 0.1, 0.36], [-4.3, 1.79, 0]),
+    {
+      geometry: sphereGeo(0.13, 8),
+      color: 0xe0a97c,
+      transform: matrix([-4.3, 1.92, 0]),
+    },
+    box(0x33261d, [0.2, 0.07, 0.24], [-4.3, 2.0, 0]),
+  ]);
+  body.add({
+    geometry: new THREE.TorusGeometry(0.26, 0.03, 5, 14),
+    color: 0x8a6440,
+    transform: matrix([-4.0, 1.32, 0], [0, Math.PI / 2, 0]),
+  });
+
+  // flag at the bow and a warm lamp under the canopy
+  body.addAll([
+    cyl(0xe9e3d6, [0.03, 0.035], 1.7, [4.55, 1.4, 0.82], [0, 0, 0], 6),
+    box(0xa8322c, [0.86, 0.12, 0.02], [4.1, 2.16, 0.82]),
+    box(0xf6f1e6, [0.86, 0.12, 0.02], [4.1, 2.04, 0.82]),
+    box(0x2f5d9a, [0.86, 0.12, 0.02], [4.1, 1.92, 0.82]),
+  ]);
+  glow.addAll([
+    box(0xffd79a, [0.22, 0.16, 0.22], [0, 2.03, 0]),
+    box(0xffd79a, [0.14, 0.12, 0.14], [4.4, 1.06, -0.9]),
+  ]);
+
+  const group = new THREE.Group();
+  const hullMesh = new THREE.Mesh(
+    body.build(),
+    new MeshStandardNodeMaterial({ vertexColors: true, flatShading: true, roughness: 0.78 }),
+  );
+  hullMesh.castShadow = true;
+  const glowMesh = new THREE.Mesh(glow.build(), new MeshBasicNodeMaterial({ vertexColors: true }));
+  group.add(hullMesh, glowMesh);
+
+  // foam: two arms opening behind the stern and a soft churn in the middle
+  const arms = new MeshBuilder();
+  arms.addAll([
+    box(0xdfefe9, [9.4, 0.02, 0.16], [-8.7, 0.09, 1.2], [0, 0.19, 0]),
+    box(0xdfefe9, [9.4, 0.02, 0.16], [-8.7, 0.09, -1.2], [0, -0.19, 0]),
+  ]);
+  const churn = new MeshBuilder();
+  churn.add(box(0xeaf6f1, [7.2, 0.02, 1.3], [-7.5, 0.08, 0]));
+  const foamMaterial = (opacity: number) =>
+    new MeshBasicNodeMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+    });
+  const armMesh = new THREE.Mesh(arms.build(), foamMaterial(0.34));
+  const churnMesh = new THREE.Mesh(churn.build(), foamMaterial(0.16));
+  armMesh.renderOrder = churnMesh.renderOrder = 2;
+  group.add(armMesh, churnMesh);
+
+  return group;
+}
+
 /* -------------------------------------------------------------- sky & water */
 
 /** Top and underside of the golden-hour cumulus layer. */
@@ -1614,7 +1854,13 @@ function buildSky(light: boolean): THREE.Mesh {
   const sunDir = vec3(SUN_DIR.x, SUN_DIR.y, SUN_DIR.z);
   const sd = max(dot(dir, sunDir), float(0));
   const glow = pow(sd, float(26)).mul(0.85).add(pow(sd, float(5)).mul(0.3));
-  const sky = base.add(vec3(...linear(COLORS.sun)).mul(glow));
+  // the sun itself: a small hot disc with a soft corona. Bloom picks it up and
+  // it is the one thing that makes the sky read as a real late afternoon.
+  const disc = smoothstep(float(0.99955), float(0.99986), sd).mul(3.4);
+  const corona = pow(sd, float(240)).mul(0.55);
+  const sky = base.add(vec3(...linear(COLORS.sun)).mul(glow)).add(
+    vec3(...linear(0xfff6e2)).mul(disc.add(corona)),
+  );
 
   // Cumulus layer. fBm is sampled on a flat plane projected onto the dome: the
   // divide by dir.y makes the clouds bunch up towards the horizon and slide
@@ -1676,9 +1922,23 @@ function buildWater(): THREE.Mesh {
     vec3(...linear(COLORS.skyHorizon)).mul(0.78),
     smoothstep(float(0), float(0.5), upness),
   );
-  material.colorNode = mix(vec3(...linear(COLORS.waterDeep)), skyRefl, fres.mul(0.8))
-    .mul(mix(float(0.74), float(1.08), n))
-    .add(vec3(...linear(COLORS.sun)).mul(glitter).mul(1.8));
+
+  // What the water sees near the banks is brick, not sky: a warm, broken band
+  // just inside the quay walls, stronger the closer the fragment is to a wall.
+  const bank = smoothstep(float(3.1), float(5.85), abs(p.z));
+  const seam = sin(p.x.mul(0.62).add(p.z.mul(1.9)).add(t.mul(0.5)))
+    .mul(sin(p.x.mul(0.17).sub(t.mul(0.22))))
+    .mul(0.5)
+    .add(0.5);
+  const bricks = vec3(...linear(COLORS.brick[1]))
+    .mul(bank)
+    .mul(seam.mul(0.34).add(0.1))
+    .mul(float(0.9));
+
+  const body = mix(vec3(...linear(COLORS.waterDeep)), skyRefl.mul(0.62), fres.mul(0.8))
+    .mul(mix(float(0.55), float(1.02), n))
+    .add(bricks);
+  material.colorNode = body.add(vec3(...linear(COLORS.sun)).mul(glitter).mul(2.4));
 
   material.positionNode = vec3(
     positionLocal.x,
@@ -1705,6 +1965,7 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   const nature = new MeshBuilder(CHUNK_SIZE);
   const glow = new MeshBuilder(CHUNK_SIZE);
   const colliders: Collider[] = [];
+  const blockers: Blocker[] = [];
   const bobbers: { object: THREE.Object3D; phase: number; amp: number; tilt: number; speed: number }[] = [];
   const drifters: {
     object: THREE.Object3D;
@@ -1731,7 +1992,7 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   await nextFrame();
 
   onProgress("streets", 0.46);
-  buildSideStreets(ground, walls, solid, nature, glow, colliders, rng, light);
+  buildSideStreets(ground, walls, solid, nature, glow, colliders, blockers, rng, light);
   await nextFrame();
 
   onProgress("skyline", 0.52);
@@ -1739,7 +2000,7 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   await nextFrame();
 
   onProgress("props", 0.64);
-  buildProps(solid, glow, nature, colliders, rng);
+  buildProps(solid, glow, nature, colliders, blockers, rng);
   buildMarket(solid, glow, nature, colliders, rng);
   if (!light) buildClutter(solid, nature, colliders, rng);
   await nextFrame();
@@ -1767,9 +2028,12 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   for (let i = 0; i < 8; i++) {
     const spot = -LAYOUT.worldX + 18 + i * range(rng, 26, 36);
     if (Math.abs(spot) > LAYOUT.worldX - 14) break;
+    // the bridge arches leave barely a metre over the water at this offset:
+    // a houseboat moored here would sit on top of the bridge
+    if (LAYOUT.bridges.some((bx) => Math.abs(spot - bx) < 14)) continue;
     const side = i % 2 === 0 ? 1 : -1;
     const boat = buildHouseboat(rng);
-    boat.position.set(spot, LAYOUT.waterY + 0.75, side * (LAYOUT.canalHalf - 1.6));
+    boat.position.set(spot, LAYOUT.waterY, side * (LAYOUT.canalHalf - 1.55));
     boat.rotation.y = side > 0 ? 0 : Math.PI;
     root.add(boat);
     bobbers.push({
@@ -1783,10 +2047,29 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   await nextFrame();
 
   onProgress("boats", 0.93);
+  // the tour boat owns the middle of the canal and is the biggest thing that
+  // moves in the whole world, so it gets the clearest lane
+  const tour = buildTourBoat(rng);
+  tour.name = "tour-boat";
+  // it starts just up the canal from the spawn and sails towards the bridge,
+  // so the first thing a visitor sees is a boat going by
+  tour.position.set(-18, LAYOUT.waterY, 0.15);
+  tour.rotation.y = Math.PI;
+  root.add(tour);
+  drifters.push({
+    object: tour,
+    phase: 0.4,
+    speed: 2.35,
+    dir: -1,
+    y: LAYOUT.waterY,
+    amp: 0.018,
+    roll: 0.006,
+  });
+
   for (let i = 0; i < 2; i++) {
     const dir = i === 0 ? 1 : -1;
     const boat = buildRowboat();
-    boat.position.set(rng() * 160 - 80, LAYOUT.waterY + 0.25, (i === 0 ? 1 : -1) * 2.6);
+    boat.position.set(rng() * 160 - 80, LAYOUT.waterY + 0.25, (i === 0 ? 1 : -1) * 2.95);
     boat.rotation.y = dir > 0 ? 0 : Math.PI;
     root.add(boat);
     drifters.push({
@@ -1801,11 +2084,12 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   }
   await nextFrame();
 
-  // swans idling on the water — slower and steadier than the boats
+  // swans idling on the water — slower and steadier than the boats, and they
+  // stay out of the tour boat's lane
   for (let i = 0; i < 3; i++) {
     const dir = i % 2 === 0 ? 1 : -1;
     const swan = buildSwan();
-    swan.position.set(rng() * 200 - 100, LAYOUT.waterY + 0.22, (i - 1) * 2.1);
+    swan.position.set(rng() * 200 - 100, LAYOUT.waterY + 0.22, (i === 0 ? 3.4 : i === 1 ? -3.3 : 3.0));
     swan.rotation.y = dir > 0 ? 0 : Math.PI;
     root.add(swan);
     drifters.push({
@@ -1886,6 +2170,7 @@ export async function buildCity(onProgress: (label: string, value: number) => vo
   return {
     root,
     colliders,
+    blockers,
     collectibles,
     update,
     setCamera(position: THREE.Vector3) {

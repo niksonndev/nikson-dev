@@ -229,6 +229,9 @@ export default function ThreeRoute() {
       {/* vignette */}
       <div className="pointer-events-none absolute inset-0 [background:radial-gradient(120%_90%_at_50%_45%,transparent_45%,rgba(9,9,11,0.72)_100%)]" />
 
+      {/* dark scrim so the header stays readable against a bright sky */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-zinc-950/55 via-zinc-950/20 to-transparent" />
+
       {/* header */}
       <header className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4 md:p-6">
         <div className="pointer-events-auto">
@@ -238,16 +241,27 @@ export default function ThreeRoute() {
           >
             <span aria-hidden>←</span> {t("three.back")}
           </Link>
-          <h1 className="mt-3 max-w-sm text-xl font-semibold leading-tight text-zinc-100 drop-shadow md:text-2xl">
+          <h1 className="mt-3 max-w-sm text-xl font-semibold leading-tight text-zinc-100 drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)] md:text-2xl">
             {t("three.title")}
           </h1>
-          <p className="mt-1 max-w-sm text-sm text-zinc-400 drop-shadow">{t("three.subtitle")}</p>
+          <p className="mt-1 hidden max-w-sm text-sm text-zinc-300/90 drop-shadow-[0_1px_8px_rgba(0,0,0,0.8)] sm:block">
+            {t("three.subtitle")}
+          </p>
         </div>
         <div className="pointer-events-auto flex flex-col items-end gap-2">
           <div className="flex items-center gap-2">
             {total > 0 && (
-              <span className="rounded-lg border border-zinc-700/70 bg-zinc-950/70 px-2.5 py-1.5 text-xs text-zinc-200 backdrop-blur">
-                🌷 {collected}/{total}
+              <span className="flex items-center gap-2 rounded-lg border border-zinc-700/70 bg-zinc-950/70 px-2.5 py-1.5 text-xs text-zinc-200 backdrop-blur">
+                <span aria-hidden>🌷</span>
+                <span className="font-mono tabular-nums">
+                  {collected}/{total}
+                </span>
+                <span className="h-1 w-8 overflow-hidden rounded-full bg-zinc-700" aria-hidden>
+                  <span
+                    className="block h-full rounded-full bg-[#e0544f] transition-[width] duration-500"
+                    style={{ width: `${total > 0 ? (collected / total) * 100 : 0}%` }}
+                  />
+                </span>
               </span>
             )}
             <button
@@ -360,39 +374,48 @@ export default function ThreeRoute() {
 
       {/* title card before the first input */}
       {status === "ready" && !started && !near && (
-        <div className="pointer-events-none absolute inset-0 flex items-end justify-start p-6 md:items-center">
-          <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-zinc-700/60 bg-zinc-950/70 p-6 text-center shadow-2xl backdrop-blur-md md:text-left">
-            <p className="text-[11px] uppercase tracking-[0.34em] text-zinc-400">
-              {backend && backend === "WebGPU" ? "WebGPU · three.js + TSL" : "three.js + TSL"}
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold text-zinc-50">{t("three.title")}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-300">{t("three.intro")}</p>
-            <button
-              type="button"
-              onClick={() => setStarted(true)}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-white"
-            >
-              <span aria-hidden>🚲</span>
-              {t("three.start")}
-            </button>
-            <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] text-zinc-400 md:justify-start">
-              {(
-                [
-                  ["W / ↑", t("three.controls.pedal")],
-                  ["A D", t("three.controls.steer")],
-                  ["Shift", t("three.controls.boost")],
-                  ["E", t("three.controls.enter")],
-                  ["H", t("three.controls.bell")],
-                ] as const
-              ).map(([key, label]) => (
-                <li key={key} className="flex items-center gap-1.5">
-                  <span className="rounded border border-zinc-700 bg-zinc-900/80 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300">
-                    {key}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-start p-4 md:p-6">
+          <div className="pointer-events-auto w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60 shadow-2xl backdrop-blur-md">
+            <div className="h-[3px] w-full bg-gradient-to-r from-[#e0544f] via-[#f0c94c] to-[#3f7fbe]" />
+            <div className="p-5">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-400">
+                {backend === "WebGPU" ? "WebGPU" : "WebGL2"} · three.js + TSL
+              </p>
+              <p className="mt-2.5 text-sm leading-relaxed text-zinc-200">{t("three.intro")}</p>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStarted(true);
+                    worldRef.current?.begin();
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg transition hover:bg-white active:scale-[0.98]"
+                >
+                  <span aria-hidden>🚲</span>
+                  {t("three.start")}
+                </button>
+                <span className="text-[11px] text-zinc-500">
+                  {isTouch ? t("three.tapToRide") : t("three.pressToRide")}
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-zinc-400">
+                {(
+                  [
+                    ["A D", t("three.controls.steer")],
+                    ["Shift", t("three.controls.boost")],
+                    ["E", t("three.controls.enter")],
+                    ["drag", t("three.controls.camera")],
+                  ] as const
+                ).map(([key, label]) => (
+                  <span key={key} className="flex items-center gap-1.5">
+                    <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300">
+                      {key}
+                    </span>
+                    {label}
                   </span>
-                  {label}
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -450,7 +473,7 @@ export default function ThreeRoute() {
       )}
 
       {/* controls */}
-      {status === "ready" && !openPoi && (
+      {status === "ready" && !openPoi && started && (
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 p-4">
           {isTouch ? (
             <div className="flex w-full max-w-md items-center justify-between gap-2">
@@ -504,26 +527,23 @@ export default function ThreeRoute() {
               </div>
             </div>
           ) : (
-            <ul className="hidden flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-zinc-400 md:flex">
+            <ul className="hidden flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-zinc-300/75 [text-shadow:0_1px_6px_rgba(0,0,0,0.95)] md:flex">
               {(
                 [
-                  ["W / ↑", t("three.controls.pedal")],
-                  ["S / ↓", t("three.controls.brake")],
-                  ["A D / ← →", t("three.controls.steer")],
+                  ["W", t("three.controls.pedal")],
+                  ["S", t("three.controls.brake")],
+                  ["A D", t("three.controls.steer")],
                   ["Shift", t("three.controls.boost")],
                   ["Space", t("three.controls.jump")],
                   ["E", t("three.controls.enter")],
                   ["H", t("three.controls.bell")],
-                  ["L", t("three.sound")],
                   ["M", t("three.mapTitle")],
-                  ["R", t("three.controls.reset")],
                   ["drag", t("three.controls.camera")],
                 ] as const
-              ).map(([key, label]) => (
+              ).map(([key, label], index) => (
                 <li key={key} className="flex items-center gap-1.5">
-                  <span className="rounded border border-zinc-700 bg-zinc-900/80 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">
-                    {key}
-                  </span>
+                  {index > 0 && <span className="mr-1 text-zinc-600/80">·</span>}
+                  <span className="font-mono text-[10px] uppercase tracking-wide text-zinc-400">{key}</span>
                   {label}
                 </li>
               ))}
@@ -562,10 +582,10 @@ export default function ThreeRoute() {
 /** Strip map of the two quays, the canal, bridges, secrets and the rider. */
 function Minimap({ telemetry, label }: { telemetry: Telemetry; label: string }) {
   const width = 264;
-  const height = 96;
+  const height = 108;
   const stepX = 0.9;
   const toX = (x: number) => (x + LAYOUT.worldX) * stepX + 4;
-  const toY = (z: number) => (z + 22) * 2;
+  const toY = (z: number) => (z + 24) * 2;
   const heading =
     (Math.atan2(-2 * Math.sin(telemetry.yaw), Math.cos(telemetry.yaw)) * 180) / Math.PI;
 
@@ -591,8 +611,29 @@ function Minimap({ telemetry, label }: { telemetry: Telemetry; label: string }) 
         <rect x={0} y={toY(6)} width={width} height={20} fill="#574f45" />
         <rect x={0} y={toY(-16)} width={width} height={20} fill="#574f45" />
         {/* houses */}
-        <rect x={0} y={toY(16)} width={width} height={12} fill="#8a4c38" />
-        <rect x={0} y={toY(-22)} width={width} height={12} fill="#8a4c38" />
+        <rect x={0} y={toY(16)} width={width} height={16} fill="#8a4c38" />
+        <rect x={0} y={toY(-24)} width={width} height={16} fill="#8a4c38" />
+        {/* the side streets, cut through the block and ending in a square */}
+        {LAYOUT.sideStreets.map((sx) =>
+          [1, -1].map((side) => (
+            <g key={`${sx}:${side}`}>
+              <rect
+                x={toX(sx - LAYOUT.sideStreetHalf)}
+                y={side > 0 ? toY(16) : toY(-LAYOUT.sideStreetDepth)}
+                width={LAYOUT.sideStreetHalf * 2 * stepX}
+                height={(LAYOUT.sideStreetDepth - 16) * 2}
+                fill="#6f6459"
+              />
+              <rect
+                x={toX(sx - LAYOUT.squareHalf)}
+                y={side > 0 ? toY(LAYOUT.squareZ) : toY(-LAYOUT.squareZ - 1)}
+                width={LAYOUT.squareHalf * 2 * stepX}
+                height={2}
+                fill="#877a6c"
+              />
+            </g>
+          )),
+        )}
         {/* bridges */}
         {LAYOUT.bridges.map((bx) => (
           <rect

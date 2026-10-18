@@ -1,8 +1,8 @@
 import * as THREE from "three/webgpu";
 import { RenderPipeline, WebGPURenderer } from "three/webgpu";
-import { pass } from "three/tsl";
+import { cameraPosition, float, pass, positionWorld, smoothstep } from "three/tsl";
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
-import { buildCity, SUN_COLOR, SUN_DIR, type Collectible } from "./city";
+import { buildCity, SUN_COLOR, SUN_DIR, type Blocker, type Collectible } from "./city";
 import { createBike } from "./bike";
 import { createAudio } from "./audio";
 import { createInput } from "./input";
@@ -51,6 +51,8 @@ export type WorldHandle = {
   dispose: () => void;
   setPaused: (paused: boolean) => void;
   setVirtual: (input: { steer?: number; throttle?: number; brake?: number }) => void;
+  /** leave the title shot and hand the camera to the rider */
+  begin: () => void;
   interact: () => void;
   jump: () => void;
   reset: () => void;
@@ -66,6 +68,8 @@ const ACCEL = 15;
 const BRAKE = 26;
 const RIDER_RADIUS = 0.45;
 const POI_RANGE = 5;
+/** Three-quarter view from the canal side for the title shot. */
+const INTRO_YAW = -0.46;
 /** Where every ride starts (and restarts after a reset). */
 const START = { x: -38, z: 10.2, yaw: 0 };
 
@@ -89,18 +93,20 @@ function createMotes(): {
   mesh: THREE.InstancedMesh;
   update: (t: number, dt: number, center: THREE.Vector3) => void;
 } {
-  const count = 600;
-  const geometry = new THREE.OctahedronGeometry(0.075, 0);
+  const count = 380;
+  const geometry = new THREE.OctahedronGeometry(0.055, 0);
   const material = new THREE.MeshBasicNodeMaterial({
     color: 0xffdcae,
     transparent: true,
-    opacity: 0.6,
+    opacity: 0.45,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
   const mesh = new THREE.InstancedMesh(geometry, material, count);
   mesh.frustumCulled = false;
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  // a mote that drifts into the lens would fill the screen: fade the near field
+  material.opacityNode = smoothstep(float(1.4), float(5.2), positionWorld.sub(cameraPosition).length()).mul(0.45);
 
   const positions = new Float32Array(count * 3);
   const phases = new Float32Array(count);
@@ -148,19 +154,22 @@ function createPetals(): {
   mesh: THREE.InstancedMesh;
   update: (t: number, dt: number, center: THREE.Vector3) => void;
 } {
-  const count = 240;
-  const geometry = new THREE.PlaneGeometry(0.15, 0.22);
+  const count = 150;
+  const geometry = new THREE.PlaneGeometry(0.085, 0.125);
   const material = new THREE.MeshStandardNodeMaterial({
     roughness: 0.9,
     metalness: 0,
     side: THREE.DoubleSide,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.72,
     depthWrite: false,
   });
   const mesh = new THREE.InstancedMesh(geometry, material, count);
   mesh.frustumCulled = false;
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  // petals are thin planes: up close they read as giant paper quads, so they
+  // dissolve over the first couple of metres in front of the camera
+  material.opacityNode = smoothstep(float(0.9), float(3.6), positionWorld.sub(cameraPosition).length()).mul(0.72);
 
   const positions = new Float32Array(count * 3);
   const phases = new Float32Array(count);
@@ -168,9 +177,9 @@ function createPetals(): {
   const spins = new Float32Array(count);
   const color = new THREE.Color();
   for (let i = 0; i < count; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 64;
-    positions[i * 3 + 1] = 0.6 + Math.random() * 8;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 44;
+    positions[i * 3] = (Math.random() - 0.5) * 48;
+    positions[i * 3 + 1] = 0.4 + Math.random() * 3.8;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 32;
     phases[i] = Math.random() * Math.PI * 2;
     speeds[i] = 0.6 + Math.random() * 1.4;
     spins[i] = 0.6 + Math.random() * 1.6;
@@ -189,10 +198,10 @@ function createPetals(): {
         positions[ix] += speeds[i] * dt;
         positions[ix + 1] -= (0.35 + Math.sin(t * spins[i] + phases[i]) * 0.2) * dt;
         positions[ix + 2] += Math.sin(t * 0.8 + phases[i]) * dt * 1.1;
-        if (positions[ix] > 32) positions[ix] = -32;
-        if (positions[ix + 1] < 0.3) positions[ix + 1] = 8.5;
-        if (positions[ix + 2] > 22) positions[ix + 2] = -22;
-        if (positions[ix + 2] < -22) positions[ix + 2] = 22;
+        if (positions[ix] > 24) positions[ix] = -24;
+        if (positions[ix + 1] < 0.25) positions[ix + 1] = 4.2;
+        if (positions[ix + 2] > 16) positions[ix + 2] = -16;
+        if (positions[ix + 2] < -16) positions[ix + 2] = 16;
         dummy.position.set(positions[ix], positions[ix + 1], positions[ix + 2]);
         dummy.rotation.set(t * spins[i] + phases[i], t * 1.3 + phases[i], t * 0.7 * spins[i]);
         dummy.updateMatrix();
@@ -226,6 +235,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
   const audio = createAudio();
   let audioReady = false;
   let colliders: Collider[] = [];
+  let blockers: Blocker[] = [];
   let collectibles: Collectible[] = [];
   let totalCollectibles = 0;
   let backendName = "WebGL2";
@@ -307,10 +317,9 @@ export function createWorld(options: WorldOptions): WorldHandle {
     nearest: null as PoiId | null,
   };
 
-  const cameraState = { yawOffset: 0, pitchOffset: 0, distance: 7.2, dragging: false, lastX: 0, lastY: 0 };
-  // before the first input the camera slowly orbits the bike, like a title screen
+  const cameraState = { yawOffset: 0, pitchOffset: 0, distance: 7.4, dragging: false, lastX: 0, lastY: 0, occlusion: 1 };
+  // before the first input the camera holds a postcard shot of the bike
   let intro = true;
-  let introSpin = 0;
 
   const forward = new THREE.Vector3();
   const desired = new THREE.Vector3();
@@ -467,17 +476,58 @@ export function createWorld(options: WorldOptions): WorldHandle {
     });
   }
 
+  /**
+   * How far the chase camera can sit behind the rider before a tree crown is
+   * in the way. The city is fully merged, so a raycast would be far too heavy;
+   * the builder hands over one sphere per crown and the maths is a 2D cut.
+   */
+  function clearBack(fromX: number, fromZ: number, dx: number, dz: number, maxBack: number, eyeY: number): number {
+    let best = maxBack;
+    for (const b of blockers) {
+      const gap = Math.hypot(b.x - fromX, b.z - fromZ);
+      if (gap > maxBack + b.r + 2) continue;
+      if (eyeY > b.y + b.r + 0.05 || eyeY < b.y - b.r - 0.05) continue;
+      const r = b.r + 0.4;
+      const fx = fromX - b.x;
+      const fz = fromZ - b.z;
+      const a = dx * dx + dz * dz;
+      const half = fx * dx + fz * dz;
+      const c = fx * fx + fz * fz - r * r;
+      const disc = half * half - a * c;
+      if (disc <= 0) continue;
+      const t = (-half - Math.sqrt(disc)) / a;
+      if (t > 0 && t < 1) {
+        const reach = Math.max(2.6, t * maxBack - 0.5);
+        if (reach < best) best = reach;
+      }
+    }
+    return best;
+  }
+
   function updateCamera(dt: number): void {
     const smoothing = 1 - Math.exp(-6 * dt);
-    if (intro) introSpin += dt * 0.22;
-    else introSpin *= 1 - Math.min(1, dt * 1.6);
-    const yaw = state.yaw + cameraState.yawOffset + introSpin;
+    // the title shot is a postcard, not an orbit: a fixed three-quarter angle
+    // from the canal side, so the houses and the water frame the bike and the
+    // camera never wanders under the shop awnings or into a plane tree
+    const introYaw = INTRO_YAW + Math.sin(state.time * 0.11) * 0.04;
+    const yaw = state.yaw + cameraState.yawOffset + (intro ? introYaw : 0);
     forwardVector(yaw, forward);
-    const back = cameraState.distance + Math.abs(state.speed) * 0.1;
-    const height = 2.9 + cameraState.pitchOffset;
+    const chase = cameraState.distance + Math.abs(state.speed) * 0.1;
+    const eyeY = heightAt(state.x, state.z) + (intro ? 5.2 : 3.0) + cameraState.pitchOffset;
+
+    // pull in instead of letting a plane tree fill the whole screen
+    let want = 1;
+    if (!intro && blockers.length) {
+      const clear = clearBack(state.x, state.z, -forward.x, -forward.z, chase, eyeY);
+      want = THREE.MathUtils.clamp(clear / chase, 0.28, 1);
+    }
+    cameraState.occlusion += (want - cameraState.occlusion) * Math.min(1, dt * (want < cameraState.occlusion ? 16 : 3.6));
+
+    const open = intro ? 10.6 : chase * cameraState.occlusion;
+    const height = eyeY - heightAt(state.x, state.z);
 
     desired
-      .set(state.x - forward.x * back, heightAt(state.x, state.z) + height, state.z - forward.z * back);
+      .set(state.x - forward.x * open, heightAt(state.x, state.z) + height, state.z - forward.z * open);
     camera.position.lerp(desired, smoothing);
 
     // keep the chase camera out of the houses: same limits as the rider, but a
@@ -611,6 +661,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
       if (disposed) return;
 
       colliders = built.colliders;
+      blockers = built.blockers;
       collectibles = built.collectibles;
       totalCollectibles = collectibles.length;
       scene.add(built.root);
@@ -700,6 +751,7 @@ export function createWorld(options: WorldOptions): WorldHandle {
           built,
           input,
         };
+        (window as unknown as { __THREE?: unknown }).__THREE = THREE;
       }
     } catch (error) {
       options.onError(error);
@@ -726,6 +778,13 @@ export function createWorld(options: WorldOptions): WorldHandle {
     setPaused(next: boolean) {
       paused = next;
       if (next) input.clear();
+    },
+    begin() {
+      intro = false;
+      if (!audioReady) {
+        audio.resume();
+        audioReady = true;
+      }
     },
     setVirtual(next) {
       input.setVirtual(next);

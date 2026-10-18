@@ -10,7 +10,8 @@
       }
     },
     "routeIdToServerBundleId": {
-      "routes/home": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+      "routes/home": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/three": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
     },
     "routes": {
       "root": {
@@ -27,13 +28,22 @@
         "config": {
           "runtime": "nodejs"
         }
+      },
+      "routes/three": {
+        "id": "routes/three",
+        "parentId": "root",
+        "file": "app/routes/three.tsx",
+        "path": "three",
+        "config": {
+          "runtime": "nodejs"
+        }
       }
     }
   },
   "reactRouterConfig": {
-    "appDirectory": "C:/Users/nikso/dev/nikson-dev/app",
+    "appDirectory": "/home/nikson/dev/nikson-dev/app",
     "basename": "/",
-    "buildDirectory": "C:/Users/nikso/dev/nikson-dev/build",
+    "buildDirectory": "/home/nikson/dev/nikson-dev/build",
     "future": {
       "unstable_optimizeDeps": false,
       "unstable_subResourceIntegrity": false,
@@ -53,6 +63,12 @@
         "parentId": "root",
         "file": "routes/home.tsx",
         "index": true
+      },
+      "routes/three": {
+        "id": "routes/three",
+        "parentId": "root",
+        "file": "routes/three.tsx",
+        "path": "three"
       }
     },
     "routeDiscovery": {
@@ -72,6 +88,10 @@
           {
             "file": "routes/home.tsx",
             "index": true
+          },
+          {
+            "file": "routes/three.tsx",
+            "path": "three"
           }
         ]
       }
