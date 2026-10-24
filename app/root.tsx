@@ -17,7 +17,7 @@ import {
 } from "~/components/GoogleTagManager";
 import { SetDocumentLang } from "~/components/SetDocumentLang";
 import { SkipLink } from "~/components/SkipLink";
-import i18n from "~/i18n/i18n";
+import i18n, { supportedLngs } from "~/i18n/i18n";
 import "./app.css";
 import cssUrl from "./app.css?url";
 
@@ -37,7 +37,7 @@ export const links: Route.LinksFunction = () => [
 export async function loader({ request }: Route.LoaderArgs) {
   const cookieHeader = request.headers.get("Cookie") ?? "";
   const match = cookieHeader.match(/i18nextLng=([^;]+)/);
-  const lng = match?.[1] ?? "en";
+  const lng = supportedLngs.find((code) => code === match?.[1]) ?? "en";
   return { lng };
 }
 

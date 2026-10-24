@@ -46,8 +46,9 @@
     "buildDirectory": "/home/nikson/dev/nikson-dev/build",
     "future": {
       "unstable_optimizeDeps": false,
-      "unstable_subResourceIntegrity": false,
-      "unstable_trailingSlashAwareDataRequests": false,
+      "v8_passThroughRequests": false,
+      "v8_trailingSlashAwareDataRequests": false,
+      "unstable_previewServerPrerendering": false,
       "v8_middleware": false,
       "v8_splitRouteModules": false,
       "v8_viteEnvironmentApi": false
@@ -78,6 +79,7 @@
     "serverBuildFile": "index.js",
     "serverModuleFormat": "esm",
     "ssr": true,
+    "subResourceIntegrity": false,
     "allowedActionOrigins": false,
     "unstable_routeConfig": [
       {
